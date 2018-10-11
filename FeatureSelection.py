@@ -58,7 +58,7 @@ class FeatureSelection():
         rel_vectorizer=self.cv
         rel_vectorizer.fit_transform(self.x_rel_train)
         rel_pool=rel_vectorizer.get_feature_names() #this is the relative features pool in alphabetic order
-        print(len(rel_pool))
+
         if (self.step_interval=='single'):
             timeline=sum(self.y_train) # the sum of relative documents
             step=1/timeline
@@ -95,9 +95,6 @@ class FeatureSelection():
                 temp_sum=0
                 k=0
                 relative_k=1
-
-            d = {'p_val': p_val, 'feat': rel_pool}
-            self.p_val_feat = self.pd.DataFrame(data=d)
         else: #this means that the interval will be a day
             # fig, ax = self.plt.subplots(1, 1)#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             timeline=len(self.file_per_day_array)
@@ -149,13 +146,18 @@ class FeatureSelection():
                 k=0
                 file=0
                 tc_count=0
-            d = {'p_val': p_val}
-            self.p_val_feat = self.pd.DataFrame(data=d) #this is a dataframe containing the values and the features 
+
+            d = {'p_val': p_val,'feat': rel_pool}
+            self.p_val_feat = self.pd.DataFrame(data=d) #this is a dataframe containing the values and the features
+            
+            
+
+
             # ax.step(cc, 'ro')
             # ax.step(tc,'bo')
             # self.plt.show()
 
-    def rdf(self,min_df):
+    def rdf(self,min_df): # it uses Coundvectorizer 
         from sklearn.feature_extraction.text import TfidfVectorizer,CountVectorizer
         self.min_df=min_df
         self.x_rel_train=[]
@@ -169,10 +171,10 @@ class FeatureSelection():
 
 
 
-# print ("the pool of relevant terms has  " + str(len(rel_pool)) +" features.")
-# subtrack from x_train all other features that are not included with regards to rel_pool
+       # print ("the pool of relevant terms has  " + str(len(rel_pool)) +" features.")
+       # subtrack from x_train all other features that are not included with regards to rel_pool
         temp_list=[]
-        new_x_train=[] #revised train set with only rel terms 
+        self.new_x_train=[] #revised train set with only rel terms 
         list2sub=[] #temp list that holds elements to subtract
 
         for txt2 in self.x_train:
@@ -184,11 +186,15 @@ class FeatureSelection():
                 temp_list.remove(x)
             list2sub=[]
             str1=' '.join(temp_list)
-            new_x_train.append(str1)
-            
+            self.new_x_train.append(str1)
+
         count_vectorizer=CountVectorizer(lowercase =False,min_df=self.min_df)#documet frequency of a rel_term threshold 
-        count_vectorizer.fit_transform(new_x_train)
+        count_vectorizer.fit_transform(self.new_x_train)
         self.rdf_rel_pool=count_vectorizer.get_feature_names()
+
+    def chi2(self,topk): # returns new_x_train
+        X=vectorizer.fit_transform(self.x_train)
+        self.new_x_train = SelectKBest(chi2, k=topk).fit_transform(X, self.y_train)
 
 
 

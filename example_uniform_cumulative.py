@@ -15,7 +15,7 @@ fig, ax = plt.subplots(1, 1)
 
 #categories are C E M G
 target_category="G"
-partition_by_id=3001 # select until what id you split the train-test
+partition_by_id=3001 # select until what id you split the train-testS
 
 
 def target_cat(text):
@@ -57,7 +57,7 @@ rel_vectorizer.fit_transform(x_rel_train)
 rel_pool=rel_vectorizer.get_feature_names() #this is the relative features pool in alphabetic order
 
 timeline=sum(y_train) # the sum of ralative documents
-print(timeline)
+
 step=1/timeline
 
 #first build the optimal cumulative uniform discrete function
@@ -75,32 +75,35 @@ k=1
 relative_k=1 #counter of the step interval 
 temp_sum=0
 temp_cumulative=[]
-max_p_val=0
-max_feature=''
-feat=rel_pool[10]
-while(k<=timeline):
-	if feat not in x_rel_train[k-1].split():
-		temp_cumulative.append(temp_sum)
-	else:
-		temp_cumulative.append(relative_k)
-		temp_sum=relative_k
-		relative_k=relative_k+1
-	k=k+1
+# max_p_val=0
+# max_feature=''
+for feat in rel_pool:
+    while(k<=timeline):
+	    if feat not in x_rel_train[k-1].split():
+		    temp_cumulative.append(temp_sum)
+	    else:
+		    temp_cumulative.append(relative_k)
+		    temp_sum=relative_k
+		    relative_k=relative_k+1
+	    k=k+1
 
-tc=np.array(temp_cumulative)/(relative_k-1)
-cc=np.array(cumulative)
-p=stats.ks_2samp(cc, tc)[1]
-p_val.append(p)
+    tc=np.array(temp_cumulative)/(relative_k-1)
+    cc=np.array(cumulative)
+    p=stats.ks_2samp(cc, tc)[1]
+    p_val.append(p)
+    temp_cumulative=[]
+    k=1
+    relative_k=1
+    temp_sum=0
 # if( max_p_val<p ):
 # 	max_p_val=p
 # 	max_feature=feat
-# temp_cumulative=[]
-# k=1
-ax.step(axes,cc, 'ro')
-ax.step(axes,tc,'bo')
-plt.show()
 
-# d = {'p_val': p_val, 'feat': rel_pool}
-# df = pd.DataFrame(data=d)
-# new_df=df.sort_values(by='p_val', ascending=False)[0:100]#select the first 100 
+# ax.step(axes,cc, 'ro')
+# ax.step(axes,tc,'bo')
+# plt.show()
+print(sorted(p_val))
+d = {'p_val': p_val, 'feat': rel_pool}
+df = pd.DataFrame(data=d)
+# print(df.sort_values(by='p_val', ascending=False)[0:100])#select the first 100 
 
