@@ -14,7 +14,7 @@ fig, ax = plt.subplots(1, 1)
 
 
 #categories are C E M G
-target_category="G"
+target_category="E"
 partition_by_id=3001 # select until what id you split the train-testS
 
 
@@ -71,15 +71,15 @@ while(k<=timeline):
 
 #calculate the cumulative distribution for every feature and get the p value
 p_val=[]
-k=1
+k=0
 relative_k=1 #counter of the step interval 
 temp_sum=0
 temp_cumulative=[]
-# max_p_val=0
-# max_feature=''
+max_p_val=0
+max_feature=''
 for feat in rel_pool:
-    while(k<=timeline):
-	    if feat not in x_rel_train[k-1].split():
+    while(k<timeline):
+	    if feat not in x_rel_train[k].split():
 		    temp_cumulative.append(temp_sum)
 	    else:
 		    temp_cumulative.append(relative_k)
@@ -91,17 +91,22 @@ for feat in rel_pool:
     cc=np.array(cumulative)
     p=stats.ks_2samp(cc, tc)[1]
     p_val.append(p)
-    temp_cumulative=[]
-    k=1
+    if( max_p_val<p ):
+        max_p_val=p
+        max_feature=feat
+        ttcc=tc
+    k=0
     relative_k=1
     temp_sum=0
-# if( max_p_val<p ):
-# 	max_p_val=p
-# 	max_feature=feat
+    temp_cumulative=[]
+ax.step(axes,ttcc,'bo', label= 'best feature')
+ax.step(axes,cc, 'ro', label= 'optimal distribution')
+ax.legend()
+plt.xlabel('occurancies')
+plt.ylabel('probability')
+plt.title('discrete cumulative uniform distribution for E')
 
-# ax.step(axes,cc, 'ro')
-# ax.step(axes,tc,'bo')
-# plt.show()
+plt.show()
 print(sorted(p_val))
 d = {'p_val': p_val, 'feat': rel_pool}
 df = pd.DataFrame(data=d)

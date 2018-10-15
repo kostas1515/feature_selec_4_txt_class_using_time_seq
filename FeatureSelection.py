@@ -46,7 +46,8 @@ class FeatureSelection():
         #this is a private method that heleps the target_category method and transforms the target_cat into 0 ,1
 
 
-    def uniform(self,step_interval,decision_thres=0.5):
+    def uniform(self,step_interval,decision_thres=0.5,topk):
+        self.topk=topk
         self.step_interval=step_interval #step interval can be either 'single' or day
         self.x_rel_train=[]
         self.decision_thres=decision_thres #it can be from 1 to 0.001 --? 1 means even one occurence count as uniform
@@ -148,8 +149,26 @@ class FeatureSelection():
                 tc_count=0
 
             d = {'p_val': p_val,'feat': rel_pool}
-            self.p_val_feat = self.pd.DataFrame(data=d) #this is a dataframe containing the values and the features
-            
+            p_val_feat = self.pd.DataFrame(data=d) #this is a dataframe containing the values and the features
+            sort_p_val_feat=p_val_feat.sort_values('p_val',ascending=False)
+            uniform_feat_pool=sort_p_val_feat['feat'][0:self.topk]
+            temp_list=[]
+            self.new_x_train=[] #revised train set with only rel terms 
+            list2sub=[] #temp list that holds elements to subtract
+
+            for txt2 in self.x_train:
+                temp_list=txt2.split()
+                for feature in temp_list:
+                    if feature not in rel_pool:
+                        list2sub.append(feature)
+                for x in list2sub:
+                    temp_list.remove(x)
+                list2sub=[]
+                str1=' '.join(temp_list)
+                self.new_x_train.append(str1)
+
+
+
             
 
 
@@ -157,9 +176,9 @@ class FeatureSelection():
             # ax.step(tc,'bo')
             # self.plt.show()
 
-    def rdf(self,min_df): # it uses Coundvectorizer 
+    def rdf(self,topk): # it uses Coundvectorizer 
         from sklearn.feature_extraction.text import TfidfVectorizer,CountVectorizer
-        self.min_df=min_df
+        self.topk=topk
         self.x_rel_train=[]
         for txt,is_rel in zip(self.x_train,self.y_train): #take only relative
             if (is_rel==1):
@@ -168,7 +187,24 @@ class FeatureSelection():
         rel_vectorizer=CountVectorizer(lowercase =False)
         rel_vectorizer.fit_transform(self.x_rel_train)
         rel_pool=rel_vectorizer.get_feature_names() #this is the relative features pool in alphabetic order
+        
+        k=0
+        term_count=0
+        term_score=[]
+        for term in rel_pool:
+            while(k<len(x_rel_train)):
+                if(term in x_rel_train[k].split()):
+                    term_count=term_count+1
+                k=k+1
+            term_score.append(term_count)
+            term_count=0
+            k=0
 
+        d = {'feat': rel_pool,'score': term_score}
+        rdf_feat_score = pd.DataFrame(data=d)
+
+        sort_rdf_feat_score=rdf_feat_score.sort_values('score',ascending=False)
+        rdf_rel_pool=sort_rdf_feat_score['feat'][0:self.topk]
 
 
        # print ("the pool of relevant terms has  " + str(len(rel_pool)) +" features.")
@@ -180,7 +216,7 @@ class FeatureSelection():
         for txt2 in self.x_train:
             temp_list=txt2.split()
             for feat in temp_list:
-                if feat not in rel_pool:
+                if feat not in rdf_rel_pool:
                     list2sub.append(feat)
             for x in list2sub:
                 temp_list.remove(x)
@@ -188,9 +224,7 @@ class FeatureSelection():
             str1=' '.join(temp_list)
             self.new_x_train.append(str1)
 
-        count_vectorizer=CountVectorizer(lowercase =False,min_df=self.min_df)#documet frequency of a rel_term threshold 
-        count_vectorizer.fit_transform(self.new_x_train)
-        self.rdf_rel_pool=count_vectorizer.get_feature_names()
+
 
     def chi2(self,topk): # returns new_x_train
         X=vectorizer.fit_transform(self.x_train)

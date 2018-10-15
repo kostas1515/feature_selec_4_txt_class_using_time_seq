@@ -70,6 +70,24 @@ rel_vectorizer.fit_transform(x_rel_train)
 rel_pool=rel_vectorizer.get_feature_names() #this is the relative features pool in alphabetic order
 
 
+k=0
+term_count=0
+term_score=[]
+for term in rel_pool:
+	while(k<len(x_rel_train)):
+		if(term in x_rel_train[k].split()):
+			term_count=term_count+1
+		k=k+1
+	term_score.append(term_count)
+	term_count=0
+	k=0
+
+d = {'feat': rel_pool,'score': term_score}
+rdf_feat_score = pd.DataFrame(data=d)
+
+sort_rdf_feat_score=rdf_feat_score.sort_values('score',ascending=False)
+rdf_rel_pool=sort_rdf_feat_score['feat'][0:1000]
+
 
 # print ("the pool of relevant terms has  " + str(len(rel_pool)) +" features.")
 
@@ -82,7 +100,7 @@ list2sub=[] #temp list that holds elements to subtract
 for txt2 in x_train:
 	temp_list=txt2.split()
 	for feat in temp_list:
-		if feat not in rel_pool:
+		if feat not in rdf_rel_pool:
 			list2sub.append(feat)
 	for x in list2sub:
 		temp_list.remove(x)
@@ -91,6 +109,4 @@ for txt2 in x_train:
 	new_x_train.append(str1)
 
 
-tfidf_vectorizer=TfidfVectorizer(lowercase =False, min_df= 12)#documet frequency of a rel_term threshold 
-tfidf_vectorizer.fit_transform(new_x_train)
-new_rel_pool=tfidf_vectorizer.get_feature_names()
+
