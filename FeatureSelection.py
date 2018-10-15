@@ -1,6 +1,6 @@
 class FeatureSelection():
     def __init__(self,target_cat,partition_by_id,):
-        from sklearn.feature_extraction.text import TfidfVectorizer,CountVectorizer
+        from sklearn.feature_extraction.text import CountVectorizer
         import numpy as np
         from scipy import stats as st
         import pandas as pd 
@@ -46,7 +46,7 @@ class FeatureSelection():
         #this is a private method that heleps the target_category method and transforms the target_cat into 0 ,1
 
 
-    def uniform(self,step_interval,decision_thres=0.5,topk):
+    def uniform(self,step_interval,decision_thres,topk):
         self.topk=topk
         self.step_interval=step_interval #step interval can be either 'single' or day
         self.x_rel_train=[]
@@ -159,14 +159,14 @@ class FeatureSelection():
             for txt2 in self.x_train:
                 temp_list=txt2.split()
                 for feature in temp_list:
-                    if feature not in rel_pool:
+                    if feature not in uniform_feat_pool:
                         list2sub.append(feature)
                 for x in list2sub:
                     temp_list.remove(x)
                 list2sub=[]
                 str1=' '.join(temp_list)
                 self.new_x_train.append(str1)
-
+            return self.new_x_train
 
 
             
@@ -177,7 +177,7 @@ class FeatureSelection():
             # self.plt.show()
 
     def rdf(self,topk): # it uses Coundvectorizer 
-        from sklearn.feature_extraction.text import TfidfVectorizer,CountVectorizer
+        from sklearn.feature_extraction.text import CountVectorizer
         self.topk=topk
         self.x_rel_train=[]
         for txt,is_rel in zip(self.x_train,self.y_train): #take only relative
@@ -192,8 +192,8 @@ class FeatureSelection():
         term_count=0
         term_score=[]
         for term in rel_pool:
-            while(k<len(x_rel_train)):
-                if(term in x_rel_train[k].split()):
+            while(k<len(self.x_rel_train)):
+                if(term in self.x_rel_train[k].split()):
                     term_count=term_count+1
                 k=k+1
             term_score.append(term_count)
@@ -223,13 +223,17 @@ class FeatureSelection():
             list2sub=[]
             str1=' '.join(temp_list)
             self.new_x_train.append(str1)
+        return self.new_x_train
 
 
-
-    def chi2(self,topk): # returns new_x_train
+    def chi_squere(self,topk): # returns new_x_train
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        from sklearn.feature_selection import SelectKBest, chi2
+        self.new_x_train=[]
+        vectorizer = TfidfVectorizer(lowercase= False)
         X=vectorizer.fit_transform(self.x_train)
         self.new_x_train = SelectKBest(chi2, k=topk).fit_transform(X, self.y_train)
-
+        return self.new_x_train
 
 
 
