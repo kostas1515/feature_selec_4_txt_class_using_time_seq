@@ -7,12 +7,12 @@ from sklearn.feature_extraction.text import  TfidfVectorizer
 
 
 bench=FeatureSelection("C",12852) #enter target category and the last id of the preffered train_set
-
-for csv in os.listdir("C:/Users/Kostas/Desktop/testspace2/csvs"):
-	data = pd.read_csv("C:/Users/Kostas/Desktop/testspace2/csvs/"+csv, encoding = 'iso-8859-1')
+#use relative path
+for csv in os.listdir("../testspace2/csvs"):
+	data = pd.read_csv("../testspace2/csvs/"+csv, encoding = 'iso-8859-1')
 	bench.split_data(data)
 
-bench.uniform('single',topk=1000)
+bench.uniform('single',decision_thres=0.5,topk=1000)
 uniform_new_x_train=bench.new_x_train
 # bench.rdf(topk=1000)
 # rdf_new_x_train=bench.new_x_train
