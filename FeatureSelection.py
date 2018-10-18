@@ -4,6 +4,8 @@ class FeatureSelection():
         import numpy as np
         from scipy import stats as st
         import pandas as pd 
+        import matplotlib.pyplot as plt
+        self.plt=plt
         self.pd=pd
         self.st=st
         self.cv=CountVectorizer(lowercase =False)
@@ -16,8 +18,7 @@ class FeatureSelection():
         self.y_test=[]
         self.file_per_day_array=[]# an array that contains the number of files that day
         self.new_x_train=[]
-        # import matplotlib.pyplot as plt
-        # self.plt=plt
+
 
 
     def split_data(self,data): #put this method under the open csv loop data must be in panda form
@@ -270,6 +271,43 @@ class FeatureSelection():
 
 
 
+    def plot_confusion_matrix(self,cm, classes,normalize=False,title='Confusion matrix'):
+        """
+        This function prints and plots the confusion matrix.
+        Normalization can be applied by setting `normalize=True`.
+        """
+        import itertools
+        cmap=self.plt.cm.Blues
+        if normalize:
+            cm = cm.astype('float') / cm.sum(axis=1)[:, self.np.newaxis]
+            print("Normalized confusion matrix")
+        else:
+            print('Confusion matrix, without normalization')
+
+        print(cm)
+
+        self.plt.imshow(cm, interpolation='nearest', cmap=cmap)
+        self.plt.title(title)
+        self.plt.colorbar()
+        tick_marks = self.np.arange(len(classes))
+        self.plt.xticks(tick_marks, classes, rotation=45)
+        self.plt.yticks(tick_marks, classes)
+
+        fmt = '.2f' if normalize else 'd'
+        thresh = cm.max() / 2.
+        for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+            self.plt.text(j, i, format(cm[i, j], fmt),
+                     horizontalalignment="center",
+                     color="white" if cm[i, j] > thresh else "black")
+
+        self.plt.ylabel('True label')
+        self.plt.xlabel('Predicted label')
+        self.plt.tight_layout()
 
 
 
+
+
+
+
+    

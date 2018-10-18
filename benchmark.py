@@ -5,6 +5,7 @@ from sklearn.metrics import classification_report, f1_score, accuracy_score, con
 from sklearn.svm import SVC, LinearSVC
 from sklearn import svm
 from sklearn.feature_extraction.text import  TfidfVectorizer
+import matplotlib.pyplot as plt
 
 
 bench=FeatureSelection("C",3001) #enter target category and the last id of the preffered train_set
@@ -37,17 +38,6 @@ clf = svm.LinearSVC().fit(u_x, label_train)
 
 
 
-train_predictions = clf.predict(u_x)
-confidence = clf.score(u_x,label_train )
- 
- 
-print ('accuracy', accuracy_score(label_train, train_predictions))
-print ('confusion matrix\n', confusion_matrix(label_train, train_predictions))
-
-
-print(classification_report(label_train, train_predictions))
-
-
 #TEST PHASE
 
 
@@ -65,3 +55,9 @@ print ('accuracy', accuracy_score(label_test, test_test_predict))
 print ('confusion matrix\n', confusion_matrix(label_test, test_test_predict))
 print ('(row=expected, col=predicted)')
 print(classification_report(label_test, test_test_predict))
+
+plt.figure()
+bench.plot_confusion_matrix(conf_test, classes="",
+                      title='Confusion matrix, for class '+ bench.target_cat )
+
+plt.show()
