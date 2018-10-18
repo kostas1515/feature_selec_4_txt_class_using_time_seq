@@ -152,7 +152,7 @@ class FeatureSelection():
         d = {'p_val': p_val,'feat': rel_pool}
         p_val_feat = self.pd.DataFrame(data=d) #this is a dataframe containing the values and the features
         sort_p_val_feat=p_val_feat.sort_values('p_val',ascending=False)
-        self.uniform_feat_pool=sort_p_val_feat['feat'][0:self.topk].tolist()
+        self.uniform_feat_pool=sort_p_val_feat['feat'][0:self.topk].tolist() # uniform_rel_pool was dataframe and it had to be a list
         temp_list=[]
         self.new_x_train=[] #revised train set with only rel terms 
         list2sub=[] #temp list that holds elements to subtract
@@ -206,7 +206,7 @@ class FeatureSelection():
         rdf_feat_score = self.pd.DataFrame(data=d)
 
         sort_rdf_feat_score=rdf_feat_score.sort_values('score',ascending=False)
-        rdf_rel_pool=sort_rdf_feat_score['feat'][0:self.topk]
+        rdf_rel_pool=sort_rdf_feat_score['feat'][0:self.topk].tolist() # attention transform the dataframe to a list !!!!
 
 
        # print ("the pool of relevant terms has  " + str(len(rel_pool)) +" features.")
@@ -217,25 +217,18 @@ class FeatureSelection():
 
         for txt2 in self.x_train:
             temp_list=txt2.split()
-            for feat in temp_list:
-                if feat not in rdf_rel_pool:
-                    list2sub.append(feat)
+            for feature in temp_list:
+                if feature not in rdf_rel_pool:
+                    list2sub.append(feature)
             for x in list2sub:
                 temp_list.remove(x)
             list2sub=[]
             str1=' '.join(temp_list)
+            temp_list=[]
             self.new_x_train.append(str1)
         return self.new_x_train
 
 
-    def chi_squere(self,topk): # returns new_x_train
-        from sklearn.feature_extraction.text import TfidfVectorizer
-        from sklearn.feature_selection import SelectKBest, chi2
-        self.new_x_train=[]
-        vectorizer = TfidfVectorizer(lowercase= False)
-        X=vectorizer.fit_transform(self.x_train)
-        self.new_x_train = SelectKBest(chi2, k=topk).fit_transform(X, self.y_train)
-        return self.new_x_train
 
 
     def random_select(self,selectk):
@@ -262,13 +255,6 @@ class FeatureSelection():
             str1=' '.join(temp_list)
             self.new_x_train.append(str1)
         return self.new_x_train
-
-
-    def remove_empty(self,x,y):
-        d = {'x': x,'y': y}
-        dataframe = self.pd.DataFrame(data=d)
-        return 0
-
 
 
     def plot_confusion_matrix(self,cm, classes,normalize=False,title='Confusion matrix'):

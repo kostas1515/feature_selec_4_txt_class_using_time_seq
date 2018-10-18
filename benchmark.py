@@ -6,7 +6,7 @@ from sklearn.svm import SVC, LinearSVC
 from sklearn import svm
 from sklearn.feature_extraction.text import  TfidfVectorizer
 import matplotlib.pyplot as plt
-
+from sklearn.feature_selection import SelectKBest, chi2
 
 bench=FeatureSelection("C",3001) #enter target category and the last id of the preffered train_set
 #use relative path
@@ -15,33 +15,41 @@ for csv in os.listdir("../testspace2/csvs"):
 	bench.split_data(data)
 
 
-uniform_new_x_train=bench.uniform('single',decision_thres=0.5,topk=1000)
+new_x_train=bench.rdf(topk=1000)
 # bench.rdf(topk=1000)
-# rdf_new_x_train=bench.new_x_train
-# bench.chi_squere(1000)
-# chi2_new_x_train=bench.new_x_train
-
+# bench.uniform('single',decision_thres=0.5,topk=1000)
+# bench.random_select(1000)
+# new_x_train=bench.x_train #for chi squere only
 
 
 label_train=bench.y_train
 label_test=bench.y_test
 x_test=bench.x_test
 
-vectorizer = TfidfVectorizer(lowercase=False).fit(uniform_new_x_train)
+vectorizer = TfidfVectorizer(lowercase=False)
+n_x = vectorizer.fit_transform(new_x_train)
 
-u_x = vectorizer.transform(uniform_new_x_train)
-#r_x = vectorizer.fit_transform(rdf_new_x_train)
-#c_x = vectorizer.fit_transform(chi2_new_x_train)
+#uncomment the 2 lines below fo chi2 
+# ch2 = SelectKBest(chi2, k=1000)
+# n_x = ch2.fit_transform(n_x, label_train)
+
+
+
 #TRAIN PHASE
 
-clf = svm.LinearSVC().fit(u_x, label_train)
+clf = svm.LinearSVC().fit(n_x, label_train)
 
 
 
-#TEST PHASE
 
+
+
+#TEST PHASEz
+#uncomment the line below for chi2,comment the next 
+# array3=ch2.transform(vectorizer.transform(x_test))
 
 array3=vectorizer.transform(x_test)
+
 test_test_predict = clf.predict(array3)
 
 
@@ -49,7 +57,7 @@ conf_test = confusion_matrix(label_test, test_test_predict)
 
 
 print(clf)
-print("Testttttt\n")
+print("\nTest\n")
  
 print ('accuracy', accuracy_score(label_test, test_test_predict))
 print ('confusion matrix\n', confusion_matrix(label_test, test_test_predict))
