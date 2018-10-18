@@ -15,6 +15,7 @@ class FeatureSelection():
         self.x_test=[]
         self.y_test=[]
         self.file_per_day_array=[]# an array that contains the number of files that day
+        self.new_x_train=[]
         # import matplotlib.pyplot as plt
         # self.plt=plt
 
@@ -97,7 +98,6 @@ class FeatureSelection():
                 k=0
                 relative_k=1
         else: #this means that the interval will be a day
-            # fig, ax = self.plt.subplots(1, 1)#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             timeline=len(self.file_per_day_array)
             step=1/timeline
             #first build the optimal cumulative uniform discrete function
@@ -148,25 +148,26 @@ class FeatureSelection():
                 file=0
                 tc_count=0
 
-            d = {'p_val': p_val,'feat': rel_pool}
-            p_val_feat = self.pd.DataFrame(data=d) #this is a dataframe containing the values and the features
-            sort_p_val_feat=p_val_feat.sort_values('p_val',ascending=False)
-            uniform_feat_pool=sort_p_val_feat['feat'][0:self.topk]
-            temp_list=[]
-            self.new_x_train=[] #revised train set with only rel terms 
-            list2sub=[] #temp list that holds elements to subtract
+        d = {'p_val': p_val,'feat': rel_pool}
+        p_val_feat = self.pd.DataFrame(data=d) #this is a dataframe containing the values and the features
+        sort_p_val_feat=p_val_feat.sort_values('p_val',ascending=False)
+        self.uniform_feat_pool=sort_p_val_feat['feat'][0:self.topk].tolist()
+        temp_list=[]
+        self.new_x_train=[] #revised train set with only rel terms 
+        list2sub=[] #temp list that holds elements to subtract
 
-            for txt2 in self.x_train:
-                temp_list=txt2.split()
-                for feature in temp_list:
-                    if feature not in uniform_feat_pool:
-                        list2sub.append(feature)
-                for x in list2sub:
-                    temp_list.remove(x)
-                list2sub=[]
-                str1=' '.join(temp_list)
-                self.new_x_train.append(str1)
-            return self.new_x_train
+        for txt2 in self.x_train:
+            temp_list=txt2.split()
+            for feature in temp_list:
+                if feature not in self.uniform_feat_pool:
+                    list2sub.append(feature)
+            for x in list2sub:
+                temp_list.remove(x)
+            list2sub=[]
+            str1=' '.join(temp_list)
+            temp_list=[]
+            self.new_x_train.append(str1)
+        return self.new_x_train
 
 
             
@@ -201,7 +202,7 @@ class FeatureSelection():
             k=0
 
         d = {'feat': rel_pool,'score': term_score}
-        rdf_feat_score = pd.DataFrame(data=d)
+        rdf_feat_score = self.pd.DataFrame(data=d)
 
         sort_rdf_feat_score=rdf_feat_score.sort_values('score',ascending=False)
         rdf_rel_pool=sort_rdf_feat_score['feat'][0:self.topk]
@@ -234,6 +235,40 @@ class FeatureSelection():
         X=vectorizer.fit_transform(self.x_train)
         self.new_x_train = SelectKBest(chi2, k=topk).fit_transform(X, self.y_train)
         return self.new_x_train
+
+
+    def random_select(self,selectk):
+        import random 
+
+        vectorizer=self.cv
+        vectorizer.fit_transform(self.x_train)
+        pool=vectorizer.get_feature_names()
+        random.shuffle(pool)
+        random_pool=pool[0:selectk]
+
+        temp_list=[]
+        self.new_x_train=[] #revised train set with only random terms
+        list2sub=[] #temp list that holds elements to subtract
+
+        for txt2 in self.x_train:
+            temp_list=txt2.split()
+            for feat in temp_list:
+                if feat not in random_pool:
+                    list2sub.append(feat)
+            for x in list2sub:
+                temp_list.remove(x)
+            list2sub=[]
+            str1=' '.join(temp_list)
+            self.new_x_train.append(str1)
+        return self.new_x_train
+
+
+    def remove_empty(self,x,y):
+        d = {'x': x,'y': y}
+        dataframe = self.pd.DataFrame(data=d)
+        return 0
+
+
 
 
 

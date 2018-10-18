@@ -14,7 +14,7 @@ fig, ax = plt.subplots(1, 1)
 
 
 #categories are C E M G
-target_category="E"
+target_category="C"
 partition_by_id=3001 # select until what id you split the train-testS
 
 
@@ -110,5 +110,5 @@ plt.show()
 print(sorted(p_val))
 d = {'p_val': p_val, 'feat': rel_pool}
 df = pd.DataFrame(data=d)
-# print(df.sort_values(by='p_val', ascending=False)[0:100])#select the first 100 
+print(df.sort_values(by='p_val', ascending=False)[0:100])#select the first 100 
 
