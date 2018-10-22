@@ -27,12 +27,12 @@ class FeatureSelection():
         filecounter=0 #this helps the uniform method to define the step interval of uniformity it can be a file or a day (maybe MONTH ???)
         for index,row in self.data.iterrows():
             if ( int(row['filename']) < self.partition_by_id ):
-                self.x_train.append(row['text'])
+                self.x_train.append(row['text'].astype('U'))
                 self.y_train.append(row['topic_bool'])
                 if(row['topic_bool']==1):
                         filecounter=filecounter+1
             else:
-                self.x_test.append(row['text'])
+                self.x_test.append(row['text'].astype('U'))
                 self.y_test.append(row['topic_bool'])
         self.file_per_day_array.append(filecounter)
        #returns the x_train y_train x_test and y_test    
