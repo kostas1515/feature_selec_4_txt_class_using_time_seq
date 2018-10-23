@@ -206,7 +206,7 @@ class FeatureSelection():
         rdf_feat_score = self.pd.DataFrame(data=d)
 
         sort_rdf_feat_score=rdf_feat_score.sort_values('score',ascending=False)
-        rdf_rel_pool=sort_rdf_feat_score['feat'][0:self.topk].tolist() # attention transform the dataframe to a list !!!!
+        self.rdf_rel_pool=sort_rdf_feat_score['feat'][0:self.topk].tolist() # attention transform the dataframe to a list !!!!
 
 
        # print ("the pool of relevant terms has  " + str(len(rel_pool)) +" features.")
@@ -218,7 +218,7 @@ class FeatureSelection():
         for txt2 in self.x_train:
             temp_list=txt2.split()
             for feature in temp_list:
-                if feature not in rdf_rel_pool:
+                if feature not in self.rdf_rel_pool:
                     list2sub.append(feature)
             for x in list2sub:
                 temp_list.remove(x)
