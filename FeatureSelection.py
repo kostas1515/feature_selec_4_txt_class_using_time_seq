@@ -30,7 +30,7 @@ class FeatureSelection():
                 self.x_train.append(row['text'])
                 self.y_train.append(row['topic_bool'])
                 if(row['topic_bool']==1):
-                        filecounter=filecounter+1
+                    filecounter=filecounter+1
             else:
                 self.x_test.append(row['text'])
                 self.y_test.append(row['topic_bool'])
