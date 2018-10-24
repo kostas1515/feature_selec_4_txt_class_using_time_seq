@@ -190,7 +190,7 @@ new_x_train=bench.x_train
 k=100
 acc=[]
 
-while(k>1):
+while(k>0.001):
     if(k==100):
         vectorizer = TfidfVectorizer(lowercase=False)
         n_x = vectorizer.fit_transform(new_x_train)
