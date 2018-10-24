@@ -7,7 +7,7 @@ from sklearn import svm
 from sklearn.feature_extraction.text import  TfidfVectorizer
 import matplotlib.pyplot as plt
 from sklearn.feature_selection import SelectPercentile, chi2
-
+import math
 
 fig, ax = plt.subplots(1, 1)
 
@@ -44,7 +44,7 @@ while(k>limit*0.001):
         acc.append(accuracy_score(label_test, test_test_predict))
         k=limit*80/100
     else:
-        rel_pool=bench.rdf_rel_pool[0:k]
+        rel_pool=bench.rdf_rel_pool[0:math.floor(k)]
 
         temp_list=[]
         list2sub=[] #temp list that holds elements to subtract
@@ -98,7 +98,7 @@ while(k>limit*0.001):
         acc.append(accuracy_score(label_test, test_test_predict))
         k=limit*80/100
     else:
-        rel_pool=bench.uniform_feat_pool[0:k]
+        rel_pool=bench.uniform_feat_pool[0:math.floor(k)]
 
         temp_list=[]
         list2sub=[] #temp list that holds elements to subtract
@@ -148,7 +148,7 @@ while(k>limit*0.001):
         acc.append(accuracy_score(label_test, test_test_predict))
         k=limit*80/100
     else:
-        rel_pool=bench.uniform_feat_pool[0:k]
+        rel_pool=bench.uniform_feat_pool[0:math.floor(k)]
 
         temp_list=[]
         list2sub=[] #temp list that holds elements to subtract
@@ -188,23 +188,25 @@ new_x_train=bench.x_train
 # new_x_train=bench.x_train #for chi squere only
 
 k=100
+limit=1000
 acc=[]
 
-while(k>0.001):
+while(k>0.001*limit):
     if(k==100):
         vectorizer = TfidfVectorizer(lowercase=False)
         n_x = vectorizer.fit_transform(new_x_train)
-        ch2 = SelectPercentile(chi2, percentile=100)
+        limit=len(vectorizer.get_feature_names())
+        ch2 = SelectKBest(chi2, k="all")
         n_x = ch2.fit_transform(n_x, label_train)
         clf = svm.LinearSVC().fit(n_x, label_train)
         array3=ch2.transform(vectorizer.transform(x_test_u))
         test_test_predict = clf.predict(array3)
         acc.append(accuracy_score(label_test, test_test_predict))
-        k=80
+        k=limit*80/100
     else:
         vectorizer = TfidfVectorizer(lowercase=False)
         n_x = vectorizer.fit_transform(new_x_train)
-        ch2 = SelectPercentile(chi2, percentile=k)
+        ch2 = SelectKBest(chi2, percentile=math.floor(k))
         n_x = ch2.fit_transform(n_x, label_train)
         clf = svm.LinearSVC().fit(n_x, label_train)
         array3=ch2.transform(vectorizer.transform(x_test_u))
