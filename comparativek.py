@@ -263,6 +263,76 @@ for category in category_matrix:
             k=k/2
     
     df["chi2_acc"]=acc_x
+    
+
+
+    n_x_train=bench.x_train
+    k=100.2#ignore that
+    limit=1000
+    acc_mi=[]
+    while(k>0.001*limit):
+        if(k==100.2):
+            vectorizer = TfidfVectorizer(lowercase=False)
+            n_x = vectorizer.fit_transform(n_x_train)
+            limit=len(vectorizer.get_feature_names())
+            features=vectorizer.get_feature_names()
+            ch2 = SelectKBest(mutual_info_classif, k="all")
+            n_x = ch2.fit_transform(n_x, label_train)
+            scores=ch2.scores_ #get the list of scores and corresponding features
+            d = {'feat': features,'score': scores}# make a list of best features regarding chi2   
+            feat_score = pd.DataFrame(data=d)
+            sort_feat_score=feat_score.sort_values('score',ascending=False)
+            pool=sort_feat_score['feat'][0:None].tolist()
+
+            clf = svm.LinearSVC().fit(n_x, label_train)
+            array3=ch2.transform(vectorizer.transform(x_test_u))
+            test_test_predict = clf.predict(array3)
+            acc_mi.append(accuracy_score(label_test, test_test_predict))
+            k=limit*80/100
+        else:
+            rel_pool=pool[0:math.floor(k)]
+
+            temp_list=[]
+            list2sub=[] #temp list that holds elements to subtract
+            new_x_train=[]
+            for txt2 in n_x_train:
+                temp_list=txt2.split()
+                for feature in temp_list:
+                    if feature not in rel_pool:
+                        list2sub.append(feature)
+                for x in list2sub:
+                    temp_list.remove(x)
+                list2sub=[]
+                str1=' '.join(temp_list)
+                temp_list=[]
+                if (str1==''): #for empty documents put nofeaturedetected
+                    new_x_train.append("nofeaturedetected")
+                else:
+                    new_x_train.append(str1)
+                
+            n_x_train=new_x_train
+
+            vectorizer = TfidfVectorizer(lowercase=False)
+            n_x = vectorizer.fit_transform(n_x_train)
+            clf = svm.LinearSVC().fit(n_x, label_train)
+            array3=vectorizer.transform(x_test_u)
+            test_test_predict = clf.predict(array3)
+            acc_mi.append(accuracy_score(label_test, test_test_predict))
+            k=k/2
+    
+    df["mutual_information"]=acc_mi
+
+
+
+
+
+
+
+
+
+
+
+
     df.to_csv('csvs/' + category+'.csv', index=False)        
 
 
