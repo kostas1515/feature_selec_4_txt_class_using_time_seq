@@ -167,7 +167,10 @@ class FeatureSelection():
             list2sub=[]
             str1=' '.join(temp_list)
             temp_list=[]
-            self.new_x_train.append(str1)
+            if (str1==''): #for empty documents put nofeaturedetected
+                self.new_x_train.append("nofeaturedetected")
+            else:
+                self.new_x_train.append(str1)
         return self.new_x_train
 
 
@@ -225,7 +228,10 @@ class FeatureSelection():
             list2sub=[]
             str1=' '.join(temp_list)
             temp_list=[]
-            self.new_x_train.append(str1)
+            if (str1==''): #for empty documents put nofeaturedetected
+                self.new_x_train.append("nofeaturedetected")
+            else:
+                self.new_x_train.append(str1)
         return self.new_x_train
 
 
