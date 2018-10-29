@@ -10,8 +10,8 @@ from sklearn.feature_selection import SelectKBest, chi2
 import math
 
 
-#category_matrix=["C","C1","C2","C3","C4","E","E1","E2","E3","E4","E5","E6","G","G1","GCRIM","GDIS","GMIL","GFAS","GPRO","GSCI","GSPO","GVIO","GVOTE","GWEA","M","M11","M12","M13","M14"]
-category_matrix=["C"]
+category_matrix=["C","C1","C2","C3","C4","E","E1","E2","E3","E4","E5","E6","G","G1","GCRIM","GDIS","GMIL","GFAS","GPRO","GSCI","GSPO","GVIO","GVOTE","GWEA","M","M11","M12","M13","M14"]
+# category_matrix=["C"]
 for category in category_matrix:
     df=pd.DataFrame()
 
