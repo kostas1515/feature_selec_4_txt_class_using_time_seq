@@ -8,14 +8,14 @@ from sklearn.feature_extraction.text import  TfidfVectorizer
 import matplotlib.pyplot as plt
 from sklearn.feature_selection import SelectKBest, chi2
 
-bench=FeatureSelection("C",26150) #enter target category and the last id of the preffered train_set
+bench=FeatureSelection("GSCI",26150) #enter target category and the last id of the preffered train_set
 #use relative path
 for csv in os.listdir("../testspace2/csvs"):
 	data = pd.read_csv("../testspace2/csvs/"+csv, encoding = 'iso-8859-1')
 	bench.split_data(data)
 
 
-new_x_train=bench.random_select(1000)
+new_x_train,new_x_test=bench.rdf(topk=1000)
 # bench.rdf(topk=1000)
 # bench.uniform('single',decision_thres=0.5,topk=1000)
 # bench.random_select(1000)
@@ -24,7 +24,7 @@ new_x_train=bench.random_select(1000)
 
 label_train=bench.y_train
 label_test=bench.y_test
-x_test=bench.x_test
+
 
 vectorizer = TfidfVectorizer(lowercase=False)
 n_x = vectorizer.fit_transform(new_x_train)
@@ -47,9 +47,8 @@ clf = svm.LinearSVC().fit(n_x, label_train)
 #TEST PHASEz
 #uncomment the line below for chi2,comment the next 
 # array3=ch2.transform(vectorizer.transform(x_test))
-x_test_u = list(map(lambda x: str(x), x_test))
 
-array3=vectorizer.transform(x_test_u)
+array3=vectorizer.transform(new_x_test)
 
 test_test_predict = clf.predict(array3)
 

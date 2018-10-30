@@ -27,12 +27,12 @@ class FeatureSelection():
         filecounter=0 #this helps the uniform method to define the step interval of uniformity it can be a file or a day (maybe MONTH ???)
         for index,row in self.data.iterrows():
             if ( int(row['filename']) < self.partition_by_id ):
-                self.x_train.append(row['text'])
+                self.x_train.append(str(row['text'])+str(row['title']))
                 self.y_train.append(row['topic_bool'])
                 if(row['topic_bool']==1):
                     filecounter=filecounter+1
             else:
-                self.x_test.append(row['text'])
+                self.x_test.append(str(row['text'])+str(row['title']))
                 self.y_test.append(row['topic_bool'])
         self.file_per_day_array.append(filecounter)
        #returns the x_train y_train x_test and y_test    
@@ -153,6 +153,7 @@ class FeatureSelection():
         p_val_feat = self.pd.DataFrame(data=d) #this is a dataframe containing the values and the features
         sort_p_val_feat=p_val_feat.sort_values('p_val',ascending=False)
         self.uniform_feat_pool=sort_p_val_feat['feat'][0:self.topk].tolist() # uniform_rel_pool was dataframe and it had to be a list
+
         temp_list=[]
         self.new_x_train=[] #revised train set with only rel terms 
         list2sub=[] #temp list that holds elements to subtract
@@ -171,15 +172,31 @@ class FeatureSelection():
                 self.new_x_train.append("nofeaturedetected")
             else:
                 self.new_x_train.append(str1)
-        return self.new_x_train
+
+
+        temp_list=[]
+        self.new_x_test=[] #revised test set with only rel terms 
+        list2sub=[] #temp list that holds elements to subtract
+
+        for txt2 in self.x_test:
+            temp_list=txt2.split()
+            for feature in temp_list:
+                if feature not in self.uniform_feat_pool:
+                    list2sub.append(feature)
+            for x in list2sub:
+                temp_list.remove(x)
+            list2sub=[]
+            str1=' '.join(temp_list)
+            temp_list=[]
+            if (str1==''): #for empty documents put nofeaturedetected
+                self.new_x_test.append("nofeaturedetected")
+            else:
+                self.new_x_test.append(str1)
+
+        return self.new_x_train,self.new_x_test
 
 
             
-
-
-            # ax.step(cc, 'ro')
-            # ax.step(tc,'bo')
-            # self.plt.show()
 
     def rdf(self,topk): # it uses Coundvectorizer 
         from sklearn.feature_extraction.text import CountVectorizer
@@ -232,8 +249,29 @@ class FeatureSelection():
                 self.new_x_train.append("nofeaturedetected")
             else:
                 self.new_x_train.append(str1)
-        return self.new_x_train
+       
 
+        temp_list=[]
+        self.new_x_test=[] #revised test set with only rel terms 
+        list2sub=[] #temp list that holds elements to subtract
+
+        for txt2 in self.x_test:
+            temp_list=txt2.split()
+            for feature in temp_list:
+                if feature not in self.rdf_rel_pool:
+                    list2sub.append(feature)
+            for x in list2sub:
+                temp_list.remove(x)
+            list2sub=[]
+            str1=' '.join(temp_list)
+            temp_list=[]
+            if (str1==''): #for empty documents put nofeaturedetected
+                self.new_x_test.append("nofeaturedetected")
+            else:
+                self.new_x_test.append(str1)
+
+
+        return self.new_x_train,self.new_x_test
 
 
 
@@ -260,7 +298,23 @@ class FeatureSelection():
             list2sub=[]
             str1=' '.join(temp_list)
             self.new_x_train.append(str1)
-        return self.new_x_train
+        
+        temp_list=[]
+        self.new_x_test=[] #revised test set with only random terms 
+        list2sub=[] #temp list that holds elements to subtract
+
+        for txt2 in self.x_test:
+            temp_list=txt2.split()
+            for feat in temp_list:
+                if feat not in random_pool:
+                    list2sub.append(feat)
+            for x in list2sub:
+                temp_list.remove(x)
+            list2sub=[]
+            str1=' '.join(temp_list)
+            self.new_x_test.append(str1)
+
+        return self.new_x_train,self.new_x_test
 
 
     def plot_confusion_matrix(self,cm, classes,normalize=False,title='Confusion matrix'):
@@ -295,6 +349,43 @@ class FeatureSelection():
         self.plt.ylabel('True label')
         self.plt.xlabel('Predicted label')
         self.plt.tight_layout()
+
+
+
+
+    def transform_features(self,pool,x_train,t_test):
+
+        temp_list=[]
+        new_x_train=[]
+        for txt2 in x_train:
+            temp_list=txt2.split()
+            for x in pool:
+                temp_list.remove(x)
+            str1=' '.join(temp_list)
+            temp_list=[]
+            if (str1==''): #for empty documents put nofeaturedetected
+                new_x_train.append("nofeaturedetected")
+            else:
+                new_x_train.append(str1)
+
+        temp_list=[]
+        new_x_test=[]
+        for txt2 in x_test:
+            temp_list=txt2.split()
+            for x in pool:
+                temp_list.remove(x)
+            str1=' '.join(temp_list)
+            temp_list=[]
+            if (str1==''): #for empty documents put nofeaturedetected
+                new_x_test.append("nofeaturedetected")
+            else:
+                new_x_test.append(str1)   
+
+
+        return new_x_train,new_x_test     
+
+
+
 
 
 
