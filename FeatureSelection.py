@@ -18,8 +18,10 @@ class FeatureSelection():
         self.y_test=[]
         self.is_wknd_train=[]#this contains if the train document was written on a weekend 
         self.is_wknd_test=[] #this contains if the test document was written on a weekend 
-        self.file_per_day_array=[]# an array that contains the number of files that day
+        self.file_per_day_array=[]# an array that contains the number of relevant docs that day
         self.new_x_train=[]
+        self.x_rel_train=[] #this contains the relevant train documents
+        self.x_rel_train_pool=[] #this contains the feature of the relevant train documents
 
 
 
@@ -29,11 +31,18 @@ class FeatureSelection():
         filecounter=0 #this helps the uniform method to define the step interval of uniformity it can be a file or a day (maybe MONTH ???)
         for index,row in self.data.iterrows():
             if ( int(row['filename']) < self.partition_by_id ):
-                self.x_train.append(str(row['text'])+str(row['title']))
+                text1=str(row['text'])+str(row['title'])
+                self.x_train.append(text1)
                 self.is_wknd_train.append(row['is_wkdn'])
                 self.y_train.append(row['topic_bool'])
                 if(row['topic_bool']==1):
                     filecounter=filecounter+1
+                    self.x_rel_train.append(text1)
+                    temp_list=text1.split()
+                    temp_list=list(set(temp_list))
+                    for x in temp_list:
+                        if x not in self.x_rel_train_pool:
+                            self.x_rel_train_pool.append(x)
             else:
                 self.x_test.append(str(row['text'])+str(row['title']))
                 self.y_test.append(row['topic_bool'])
@@ -55,16 +64,12 @@ class FeatureSelection():
     def uniform(self,step_interval,decision_thres,topk):
         self.topk=topk
         self.step_interval=step_interval #step interval can be either 'single' or day
-        self.x_rel_train=[]
         self.decision_thres=decision_thres #it can be from 1 to 0.001 --? 1 means even one occurence count as uniform
-        for txt,is_rel in zip(self.x_train,self.y_train): #take only relative
-            if (is_rel==1):
-                self.x_rel_train.append(txt)
+        
 
 
-        rel_vectorizer=self.cv
-        rel_vectorizer.fit_transform(self.x_rel_train)
-        rel_pool=rel_vectorizer.get_feature_names() #this is the relative features pool in alphabetic order
+        rel_pool= self.x_rel_train_pool
+        rel_pool=sorted(rel_pool)
 
         if (self.step_interval=='single'):
             timeline=sum(self.y_train) # the sum of relative documents
@@ -87,7 +92,9 @@ class FeatureSelection():
             temp_cumulative=[]
             for feat in rel_pool:
                 while(k<timeline):
-                    if feat not in self.x_rel_train[k].split():
+                    temp_list=list(set(self.x_rel_train[k].split()))
+                    temp_list=sorted(temp_list)
+                    if feat not in temp_list:
                         temp_cumulative.append(temp_sum)
                     else:
                         temp_cumulative.append(relative_k)
@@ -203,23 +210,19 @@ class FeatureSelection():
             
 
     def rdf(self,topk): # it uses Coundvectorizer 
-        from sklearn.feature_extraction.text import CountVectorizer
         self.topk=topk
-        self.x_rel_train=[]
-        for txt,is_rel in zip(self.x_train,self.y_train): #take only relative
-            if (is_rel==1):
-                self.x_rel_train.append(txt)
 
-        rel_vectorizer=CountVectorizer(lowercase =False)
-        rel_vectorizer.fit_transform(self.x_rel_train)
-        rel_pool=rel_vectorizer.get_feature_names() #this is the relative features pool in alphabetic order
-        
+        rel_pool=self.x_rel_train #this is the relative features pool in alphabetic order
+        rel_pool=sorted(rel_pool)
         k=0
         term_count=0
         term_score=[]
         for term in rel_pool:
             while(k<len(self.x_rel_train)):
-                if(term in self.x_rel_train[k].split()):
+                temp_list=self.x_rel_train[k].split() #make a temp_list remove duplicates and sort to increase speed
+                temp_list=list(set(temp_list))
+                temp_list=sorted(temp_list)
+                if(term in temp_list):
                     term_count=term_count+1
                 k=k+1
             term_score.append(term_count)
@@ -357,7 +360,7 @@ class FeatureSelection():
 
 
 
-    def transform_features(self,pool,x_train,t_test):
+    def transform_features(self,pool,x_train,x_test):
 
         temp_list=[]
         new_x_train=[]

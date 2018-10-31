@@ -27,7 +27,6 @@ for category in category_matrix:
 
 
     new_x_train,new_x_test=bench.rdf(None)
-
     limit=len(bench.rdf_rel_pool)
     k=limit
     acc_r=[]

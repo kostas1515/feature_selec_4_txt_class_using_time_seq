@@ -23,7 +23,7 @@ def add_row(array1,array2):
 	array3=hstack([array2,array1])
 	return array3
 
-new_x_train,new_x_test=bench.rdf(topk=None)
+new_x_train,new_x_test=bench.rdf(topk=1000)
 # bench.rdf(topk=1000)
 # bench.uniform('single',decision_thres=0.5,topk=1000)
 # bench.random_select(1000)
