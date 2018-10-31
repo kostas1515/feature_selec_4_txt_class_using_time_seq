@@ -136,7 +136,7 @@ for category in category_matrix:
             sort_feat_score=feat_score.sort_values('score',ascending=False)
             pool=sort_feat_score['feat'][0:None].tolist()
 
-            clf = svm.LinearSVC().fit(n_x, label_train)
+            clf = svm.LinearSVC(random_state=1).fit(n_x, label_train)
             array3=ch2.transform(vectorizer.transform(x_test))
             test_test_predict = clf.predict(array3)
             acc_x.append(accuracy_score(label_test, test_test_predict))
@@ -152,7 +152,7 @@ for category in category_matrix:
             vectorizer = TfidfVectorizer(lowercase=False)
             n_x = vectorizer.fit_transform(new_x_train)
 
-            clf = svm.LinearSVC().fit(n_x, label_train)
+            clf = svm.LinearSVC(random_state=1).fit(n_x, label_train)
             array3=vectorizer.transform(new_x_test)
             test_test_predict = clf.predict(array3)
             acc_x.append(accuracy_score(label_test, test_test_predict))
@@ -186,7 +186,7 @@ for category in category_matrix:
             sort_feat_score=feat_score.sort_values('score',ascending=False)
             pool=sort_feat_score['feat'][0:None].tolist()
 
-            clf = svm.LinearSVC().fit(n_x, label_train)
+            clf = svm.LinearSVC(random_state=1).fit(n_x, label_train)
             array3=mi.transform(vectorizer.transform(x_test))
             test_test_predict = clf.predict(array3)
             acc_mi.append(accuracy_score(label_test, test_test_predict))
@@ -202,7 +202,7 @@ for category in category_matrix:
             vectorizer = TfidfVectorizer(lowercase=False)
             n_x = vectorizer.fit_transform(new_x_train)
 
-            clf = svm.LinearSVC().fit(n_x, label_train)
+            clf = svm.LinearSVC(random_state=1).fit(n_x, label_train)
             array3=vectorizer.transform(new_x_test)
             test_test_predict = clf.predict(array3)
             acc_mi.append(accuracy_score(label_test, test_test_predict))

@@ -212,7 +212,7 @@ class FeatureSelection():
     def rdf(self,topk): # it uses Coundvectorizer 
         self.topk=topk
 
-        rel_pool=self.x_rel_train #this is the relative features pool in alphabetic order
+        rel_pool=self.x_rel_train_pool #this is the relative features pool in alphabetic order
         rel_pool=sorted(rel_pool)
         k=0
         term_count=0
