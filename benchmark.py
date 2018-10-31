@@ -7,15 +7,23 @@ from sklearn import svm
 from sklearn.feature_extraction.text import  TfidfVectorizer
 import matplotlib.pyplot as plt
 from sklearn.feature_selection import SelectKBest, chi2
+from scipy.sparse import coo_matrix, hstack
 
-bench=FeatureSelection("GSCI",26150) #enter target category and the last id of the preffered train_set
+bench=FeatureSelection("GSPO",26150) #enter target category and the last id of the preffered train_set
 #use relative path
 for csv in os.listdir("../testspace2/csvs"):
 	data = pd.read_csv("../testspace2/csvs/"+csv, encoding = 'iso-8859-1')
 	bench.split_data(data)
 
 
-new_x_train,new_x_test=bench.rdf(topk=1000)
+# integrate different features
+def add_row(array1,array2):
+	ar1=coo_matrix(array1)
+	ar2=coo_matrix(array2)
+	array3=hstack([array2,array1])
+	return array3
+
+new_x_train,new_x_test=bench.rdf(topk=None)
 # bench.rdf(topk=1000)
 # bench.uniform('single',decision_thres=0.5,topk=1000)
 # bench.random_select(1000)
@@ -34,9 +42,10 @@ n_x = vectorizer.fit_transform(new_x_train)
 # n_x = ch2.fit_transform(n_x, label_train)
 
 
-
+print(n_x.shape)
 #TRAIN PHASE
-
+n_x=add_row(n_x,bench.is_wknd_train)
+print(n_x.shape)
 clf = svm.LinearSVC().fit(n_x, label_train)
 
 
@@ -47,6 +56,9 @@ clf = svm.LinearSVC().fit(n_x, label_train)
 #TEST PHASEz
 #uncomment the line below for chi2,comment the next 
 # array3=ch2.transform(vectorizer.transform(x_test))
+print(new_x_test.shape)
+new_x_test=add_row(new_x_test,bench.is_wknd_test)
+print(new_x_test.shape)
 
 array3=vectorizer.transform(new_x_test)
 

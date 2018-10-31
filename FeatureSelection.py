@@ -16,6 +16,8 @@ class FeatureSelection():
         self.y_train=[]
         self.x_test=[]
         self.y_test=[]
+        self.is_wknd_train=[]#this contains if the train document was written on a weekend 
+        self.is_wknd_test=[] #this contains if the test document was written on a weekend 
         self.file_per_day_array=[]# an array that contains the number of files that day
         self.new_x_train=[]
 
@@ -28,12 +30,14 @@ class FeatureSelection():
         for index,row in self.data.iterrows():
             if ( int(row['filename']) < self.partition_by_id ):
                 self.x_train.append(str(row['text'])+str(row['title']))
+                self.is_wknd_train.append(row['is_wkdn'])
                 self.y_train.append(row['topic_bool'])
                 if(row['topic_bool']==1):
                     filecounter=filecounter+1
             else:
                 self.x_test.append(str(row['text'])+str(row['title']))
                 self.y_test.append(row['topic_bool'])
+                self.is_wknd_test.append(row['is_wkdn'])
         self.file_per_day_array.append(filecounter)
        #returns the x_train y_train x_test and y_test    
 
@@ -360,7 +364,8 @@ class FeatureSelection():
         for txt2 in x_train:
             temp_list=txt2.split()
             for x in pool:
-                temp_list.remove(x)
+                if x in temp_list:
+                    temp_list.remove(x)
             str1=' '.join(temp_list)
             temp_list=[]
             if (str1==''): #for empty documents put nofeaturedetected
@@ -373,7 +378,8 @@ class FeatureSelection():
         for txt2 in x_test:
             temp_list=txt2.split()
             for x in pool:
-                temp_list.remove(x)
+                if x in temp_list:
+                    temp_list.remove(x)
             str1=' '.join(temp_list)
             temp_list=[]
             if (str1==''): #for empty documents put nofeaturedetected
