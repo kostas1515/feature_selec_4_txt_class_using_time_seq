@@ -3,12 +3,17 @@ class FeatureSelection():
         from sklearn.feature_extraction.text import CountVectorizer
         import numpy as np
         from scipy import stats as st
+        from scipy.sparse import lil_matrix as lil 
         import pandas as pd 
         import matplotlib.pyplot as plt
+        from bisect import bisect_left as bsl
+
+        self.lil=lil
+        self.bsl=bsl
         self.plt=plt
         self.pd=pd
         self.st=st
-        self.cv=CountVectorizer(lowercase =False)
+        self.cv=CountVectorizer(lowercase =False,binary=True)
         self.np=np
         self.partition_by_id=partition_by_id # must be integer 
         self.target_cat = target_cat #must be CCAT OR GCAT GFAS GWEA etc
@@ -394,6 +399,249 @@ class FeatureSelection():
         return new_x_train,new_x_test     
 
 
+
+
+    def quick_uniform(self,x_train,y_train,x_test,topk):
+        # in the beggining creates a list to subtract all non relevant documents
+        # the result in a x_rel matrix containing all the features but only the rel documents
+
+        ind_list2_sub=[] 
+        i=0
+        while(i<len(y_train)):
+            if(y_train[i]==0):
+                ind_list2_sub.append(i)
+            i=i+1
+        
+        # this code removes the rows aka documents to create x_rel matrix
+        cols = []
+        rows = ind_list2_sub
+        mat=x_train
+        if len(rows) > 0 and len(cols) > 0:
+            row_mask = self.np.ones(mat.shape[0], dtype=bool)
+            row_mask[rows] = False
+            col_mask = self.np.ones(mat.shape[1], dtype=bool)
+            col_mask[cols] = False
+            x_rel_train= mat[row_mask][:,col_mask]
+        elif len(rows) > 0:
+            mask = self.np.ones(mat.shape[0], dtype=bool)
+            mask[rows] = False
+            x_rel_train= mat[mask]
+        elif len(cols) > 0:
+            mask = self.np.ones(mat.shape[1], dtype=bool)
+            mask[cols] = False
+            x_rel_train= mat[:,mask]
+        else:
+            x_rel_train= mat
+
+
+
+
+        amount_of_documents=x_rel_train.shape[0] # this is the amount of only relevant documents
+        amount_of_features=x_rel_train.shape[1]  # these are all the features
+
+        #build the optimal uniform function
+        opt_uni2=self.np.ones((amount_of_documents,1),dtype=int)
+        opt_uni2=self.np.cumsum(opt_uni2)
+        opt_uni2=opt_uni2/opt_uni2[-1]
+        k=0
+        p_val=[]
+        while(k<amount_of_features):#check each feature what is its distribution for non_relevant put 0
+            arr=x_rel_train[:,k]
+            arr=arr.toarray()
+            arr=self.np.where(arr > 1, 1, 0) # because we need just one, not the total amount of particular feature in that documnt so if there is above zero make it 1 (like binary countvectorizer)
+            arr=self.np.cumsum(arr) # make the cummulative sum distribution 
+            if (arr[-1]==0): # check if the last aka the sum of the distribution is 0 if it is all elements are 0, put 0 p_val
+                p_val.append([0,k])
+            else:
+                arr=arr/arr[-1]
+                p=self.st.ks_2samp(opt_uni2,arr)[1]
+                p_val.append([p,k])
+            k=k+1
+
+
+        final_pval=sorted(p_val, key=lambda x: x[0],reverse =True)
+        
+
+        #make a list from topk+1 to the end, in order to remove those columns from test and train
+        columns2_sub=[]
+        for x in final_pval[topk+1:None]:
+            columns2_sub.append(x[1])
+
+
+        ########### TRANSFORM X_TRAIN ############
+        cols = columns2_sub
+        rows = []
+        mat=x_train
+        if len(rows) > 0 and len(cols) > 0:
+            row_mask = self.np.ones(mat.shape[0], dtype=bool)
+            row_mask[rows] = False
+            col_mask = self.np.ones(mat.shape[1], dtype=bool)
+            col_mask[cols] = False
+            x_train= mat[row_mask][:,col_mask]
+        elif len(rows) > 0:
+            mask = self.np.ones(mat.shape[0], dtype=bool)
+            mask[rows] = False
+            x_train= mat[mask]
+        elif len(cols) > 0:
+            mask = self.np.ones(mat.shape[1], dtype=bool)
+            mask[cols] = False
+            x_train= mat[:,mask]
+        else:
+            x_train= mat
+
+        ######## transform x_test ###############
+        cols = columns2_sub
+        rows = []
+        mat=x_test
+        if len(rows) > 0 and len(cols) > 0:
+            row_mask = self.np.ones(mat.shape[0], dtype=bool)
+            row_mask[rows] = False
+            col_mask = self.np.ones(mat.shape[1], dtype=bool)
+            col_mask[cols] = False
+            x_test= mat[row_mask][:,col_mask]
+        elif len(rows) > 0:
+            mask = self.np.ones(mat.shape[0], dtype=bool)
+            mask[rows] = False
+            x_test= mat[mask]
+        elif len(cols) > 0:
+            mask = self.np.ones(mat.shape[1], dtype=bool)
+            mask[cols] = False
+            x_test= mat[:,mask]
+        else:
+            x_test= mat
+
+
+        return x_train,x_test
+
+
+
+
+
+    def quick_rdf(self,x_train,y_train,x_test,topk):
+        # in the beggining creates a list to subtract all non relevant documents
+        # the result in a x_rel matrix containing all the features but only the rel documents
+
+        ind_list2_sub=[] 
+        i=0
+        while(i<len(y_train)):
+            if(y_train[i]==0):
+                ind_list2_sub.append(i)
+            i=i+1
+        
+        # this code removes the rows aka documents to create x_rel matrix
+        cols = []
+        rows = ind_list2_sub
+        mat=x_train
+        if len(rows) > 0 and len(cols) > 0:
+            row_mask = self.np.ones(mat.shape[0], dtype=bool)
+            row_mask[rows] = False
+            col_mask = self.np.ones(mat.shape[1], dtype=bool)
+            col_mask[cols] = False
+            x_rel_train= mat[row_mask][:,col_mask]
+        elif len(rows) > 0:
+            mask = self.np.ones(mat.shape[0], dtype=bool)
+            mask[rows] = False
+            x_rel_train= mat[mask]
+        elif len(cols) > 0:
+            mask = self.np.ones(mat.shape[1], dtype=bool)
+            mask[cols] = False
+            x_rel_train= mat[:,mask]
+        else:
+            x_rel_train= mat
+
+
+
+
+        amount_of_documents=x_rel_train.shape[0] # this is the amount of only relevant documents
+        amount_of_features=x_rel_train.shape[1]  # these are all the features
+
+
+        k=0
+        score=[]
+        while(k<amount_of_features):#check each feature what is its distribution for non_relevant put 0
+            arr=x_rel_train[:,k]
+            arr=arr.toarray()
+            arr=self.np.where(arr > 1, 1, 0) # because we need just one, not the total amount of particular feature in that documnt so if there is above zero make it 1 (like binary countvectorizer)
+            score.append([self.np.sum(arr),k]) 
+            k=k+1
+
+        final_score=sorted(score, key=lambda x: x[0],reverse =True)
+        
+
+        #make a list from topk+1 to the end, in order to remove those columns from test and train
+        columns2_sub=[]
+        for x in final_score[topk+1:None]:
+            columns2_sub.append(x[1])
+
+
+        ########### TRANSFORM X_TRAIN ############
+        cols = columns2_sub
+        rows = []
+        mat=x_train
+        if len(rows) > 0 and len(cols) > 0:
+            row_mask = self.np.ones(mat.shape[0], dtype=bool)
+            row_mask[rows] = False
+            col_mask = self.np.ones(mat.shape[1], dtype=bool)
+            col_mask[cols] = False
+            x_train= mat[row_mask][:,col_mask]
+        elif len(rows) > 0:
+            mask = self.np.ones(mat.shape[0], dtype=bool)
+            mask[rows] = False
+            x_train= mat[mask]
+        elif len(cols) > 0:
+            mask = self.np.ones(mat.shape[1], dtype=bool)
+            mask[cols] = False
+            x_train= mat[:,mask]
+        else:
+            x_train= mat
+
+        ######## transform x_test ###############
+        cols = columns2_sub
+        rows = []
+        mat=x_test
+        if len(rows) > 0 and len(cols) > 0:
+            row_mask = self.np.ones(mat.shape[0], dtype=bool)
+            row_mask[rows] = False
+            col_mask = self.np.ones(mat.shape[1], dtype=bool)
+            col_mask[cols] = False
+            x_test= mat[row_mask][:,col_mask]
+        elif len(rows) > 0:
+            mask = self.np.ones(mat.shape[0], dtype=bool)
+            mask[rows] = False
+            x_test= mat[mask]
+        elif len(cols) > 0:
+            mask = self.np.ones(mat.shape[1], dtype=bool)
+            mask[cols] = False
+            x_test= mat[:,mask]
+        else:
+            x_test= mat
+
+
+        return x_train,x_test
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
 
 
 

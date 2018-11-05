@@ -54,6 +54,7 @@ for txt,is_rel in zip(x_train,y_train):
 
 rel_vectorizer=CountVectorizer(lowercase =False)
 rel_vectorizer.fit_transform(x_rel_train)
+
 rel_pool=rel_vectorizer.get_feature_names() #this is the relative features pool in alphabetic order
 
 timeline=sum(y_train) # the sum of ralative documents
@@ -107,8 +108,55 @@ plt.ylabel('probability')
 plt.title('discrete cumulative uniform distribution for E')
 
 plt.show()
-print(sorted(p_val))
+# print(sorted(p_val))
 d = {'p_val': p_val, 'feat': rel_pool}
 df = pd.DataFrame(data=d)
 print(df.sort_values(by='p_val', ascending=False)[0:100])#select the first 100 
+
+# print(max_feature)
+
+
+print("new method")
+
+
+x_vec=CountVectorizer(lowercase =False)
+x_rel_train=x_vec.fit_transform(x_rel_train)
+
+
+
+
+
+
+amount_of_documents=x_rel_train.shape[0]
+amount_of_features=x_rel_train.shape[1]
+
+#build the optimal uniform function
+opt_uni2=np.ones((amount_of_documents,1),dtype=int)
+opt_uni2=np.cumsum(opt_uni2)
+opt_uni2=opt_uni2/opt_uni2[-1]
+print(opt_uni2)
+k=0
+p_val=[]
+while(k<amount_of_features):#check each rel feature what is its distribution 
+    arr=x_rel_train[:,k]
+    arr=arr.toarray()
+    arr=np.cumsum(arr)
+    arr=arr/arr[-1]
+    p=stats.ks_2samp(opt_uni2,arr)[1]
+    p_val.append([p,k])
+    k=k+1
+
+
+final_pval=sorted(p_val, key=lambda x: x[0],reverse =True)[0:100]
+
+
+
+
+
+
+
+
+
+
+
 

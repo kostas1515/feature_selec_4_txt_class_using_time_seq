@@ -5,16 +5,19 @@ import numpy as np
 from sklearn.metrics import classification_report, f1_score, accuracy_score, confusion_matrix
 from sklearn.svm import SVC, LinearSVC
 from sklearn import svm
-from sklearn.feature_extraction.text import  TfidfVectorizer
+from sklearn.feature_extraction.text import  TfidfVectorizer,CountVectorizer,TfidfTransformer
 import matplotlib.pyplot as plt
 from sklearn.feature_selection import SelectKBest, chi2
 from scipy.sparse import coo_matrix, hstack
+import timeit
 
-bench=FeatureSelection("C",3001) #enter target category and the last id of the preffered train_set
+bench=FeatureSelection("GSPO",26150) #enter target category and the last id of the preffered train_set
 #use relative path
-for csv in os.listdir("../testspace/csvs2"):
-	data = pd.read_csv("../testspace/csvs2/"+csv, encoding = 'iso-8859-1')
+for csv in os.listdir("../testspace2/csvs"):
+	data = pd.read_csv("../testspace2/csvs/"+csv, encoding = 'iso-8859-1')
 	bench.split_data(data)
+
+
 
 
 # integrate different features
@@ -25,7 +28,16 @@ def add_row(array1,array2):
 
 
 
-new_x_train,new_x_test=bench.rdf(topk=1000)
+start = timeit.default_timer()
+
+vectorizer = CountVectorizer(lowercase=False)
+x_train = vectorizer.fit_transform(bench.x_train)
+x_test=vectorizer.transform(bench.x_test)
+
+new_x_train,new_x_test=bench.quick_uniform(x_train,bench.y_train,x_test,1000)
+
+stop = timeit.default_timer()
+print('Time: ', stop - start) 
 
 # bench.rdf(topk=1000)
 # bench.uniform('single',decision_thres=0.5,topk=1000)
@@ -36,7 +48,7 @@ label_train=bench.y_train
 label_test=bench.y_test
 
 
-vectorizer = TfidfVectorizer(lowercase=False)
+vectorizer = TfidfTransformer()
 n_x = vectorizer.fit_transform(new_x_train)
 
 #uncomment the 2 lines below fo chi2 
@@ -48,7 +60,7 @@ n_x = vectorizer.fit_transform(new_x_train)
 
 
 
-n_x=add_row(n_x,bench.is_wknd_train)
+#n_x=add_row(n_x,bench.is_wknd_train)
 
 
 clf = svm.LinearSVC(random_state=1).fit(n_x, label_train)
@@ -66,7 +78,7 @@ clf = svm.LinearSVC(random_state=1).fit(n_x, label_train)
 
 
 array3=vectorizer.transform(new_x_test)
-array3=add_row(array3,bench.is_wknd_test)
+#array3=add_row(array3,bench.is_wknd_test)
 
 test_test_predict = clf.predict(array3)
 
