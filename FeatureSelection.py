@@ -365,11 +365,11 @@ class FeatureSelection():
 
 
 
-    def transform_features(self,x_train,x_test,final_pval,topk,upperlimmit):
+    def transform_features(self,x_train,x_test,final_pval,topk):
 
         #make a list from topk+1 to the end, in order to remove those columns from test and train
         columns2_sub=[]
-        for x in final_pval[topk:upperlimmit]:
+        for x in final_pval[topk:None]:
             columns2_sub.append(x[1])
 
 
@@ -416,7 +416,7 @@ class FeatureSelection():
             x_test= mat
 
 
-        return x_train,x_test    
+        return x_train,x_test
 
 
 

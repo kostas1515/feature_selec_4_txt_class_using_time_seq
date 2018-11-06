@@ -37,25 +37,21 @@ for category in category_matrix:
     percent=80
     while(k>feature_amount*0.001):
         if(k==feature_amount):
-            upperlimmit=None
-            new_x_train,new_x_test=transform_features(x_train,x_test,score,k,upperlimmit)
 
             t_vectorizer = TfidfTransformer()
-            new_x_train = t_vectorizer.fit_transform(new_x_train)
+            x_train = t_vectorizer.fit_transform(x_train)
 
-            clf = svm.LinearSVC(random_state=1).fit(n_x, label_train)
-            new_x_test=t_vectorizer.transform(new_x_test)
+            clf = svm.LinearSVC(random_state=1).fit(x_train, label_train)
+            x_test=t_vectorizer.transform(x_test)
 
-            test_test_predict = clf.predict(new_x_test)
+            test_test_predict = clf.predict(x_test)
             acc_r.append(accuracy_score(label_test, test_test_predict))
 
             k=math.floor(feature_amount*80/100)
-            upperlimmit=None
             axes.append(100)
         else:
 
-            new_x_train,new_x_test=transform_features(new_x_train,new_x_test,score,k,upperlimmit)
-            upperlimmit=math.floor(k)-1
+            new_x_train,new_x_test=bench.transform_features(x_train,x_test,score,k)
             
             #classification
 
@@ -93,24 +89,18 @@ for category in category_matrix:
     percent=80
     while(k>feature_amount*0.001):
         if(k==feature_amount):
-            upperlimmit=None
-            new_x_train,new_x_test=transform_features(x_train,x_test,score,k,upperlimmit)
 
             t_vectorizer = TfidfTransformer()
-            new_x_train = t_vectorizer.fit_transform(new_x_train)
-            clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
+            x_train = t_vectorizer.fit_transform(x_train)
+            clf = svm.LinearSVC(random_state=1).fit(x_train, label_train)
 
-            new_x_test=t_vectorizer.transform(new_x_test)
-            test_test_predict = clf.predict(new_x_test)
+            x_test=t_vectorizer.transform(x_test)
+            test_test_predict = clf.predict(x_test)
             acc_u.append(accuracy_score(label_test, test_test_predict))
 
             k=math.floor(feature_amount*80/100)
-            upperlimmit=None
-
         else:
-
-            new_x_train,new_x_test=transform_features(new_x_train,new_x_test,score,k,upperlimmit)
-            upperlimmit=math.floor(k)-1
+            new_x_train,new_x_test=bench.transform_features(x_train,x_test,score,k)
             
             #classification
             
@@ -126,7 +116,7 @@ for category in category_matrix:
 
     ##################  CHI2 ##############################
 
-    new_x_train=bench.x_train
+    x_train=bench.x_train
     x_test=bench.x_test
 
     k=100.2#ignore that
@@ -134,13 +124,12 @@ for category in category_matrix:
     acc_x=[]
     while(k>0.001*limit):
         if(k==100.2):
-            upperlimmit=None
             vectorizer = TfidfVectorizer(lowercase=False)
-            new_x_train = vectorizer.fit_transform(new_x_train)
+            x_train = vectorizer.fit_transform(x_train)
 
 
             ch2 = SelectKBest(chi2, k="all")
-            new_x_train = ch2.fit_transform(new_x_train, label_train)
+            x_train = ch2.fit_transform(x_train, label_train)
 
             score=ch2.scores_ #get the list of scores and corresponding features
             limit=len(score)
@@ -153,16 +142,14 @@ for category in category_matrix:
             finalscore=sorted(finalscore,key=lambda x: x[0],reverse =True)
             
 
-            clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
-            new_x_test=ch2.transform(vectorizer.transform(x_test))
+            clf = svm.LinearSVC(random_state=1).fit(x_train, label_train)
+            x_test=ch2.transform(vectorizer.transform(x_test))
 
-            test_test_predict = clf.predict(new_x_test)
+            test_test_predict = clf.predict(x_test)
             acc_x.append(accuracy_score(label_test, test_test_predict))
             k=math.floor(limit*80/100)
         else:
-            new_x_train,new_x_test=transform_features(new_x_train,new_x_test,score,k,upperlimmit)
-            upperlimmit=math.floor(k)-1
-
+            new_x_train,new_x_test=bench.transform_features(x_train,x_test,score,k)
 
             clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
 
@@ -177,7 +164,7 @@ for category in category_matrix:
 
 
     ############ MUTUAL INFORMATION ########################
-    new_x_train=bench.x_train
+    x_train=bench.x_train
     x_test=bench.x_test
 
     k=100.2#ignore that
@@ -185,13 +172,12 @@ for category in category_matrix:
     acc_m=[]
     while(k>0.001*limit):
         if(k==100.2):
-            upperlimmit=None
             vectorizer = TfidfVectorizer(lowercase=False)
-            new_x_train = vectorizer.fit_transform(new_x_train)
+            x_train = vectorizer.fit_transform(x_train)
 
 
             mi = SelectKBest(mutual_info_classif, k="all")
-            new_x_train = mi.fit_transform(new_x_train, label_train)
+            x_train = mi.fit_transform(x_train, label_train)
 
             score=mi.scores_ #get the list of scores and corresponding features
             limit=len(score)
@@ -204,16 +190,14 @@ for category in category_matrix:
             finalscore=sorted(finalscore,key=lambda x: x[0],reverse =True)
             
 
-            clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
-            new_x_test=mi.transform(vectorizer.transform(x_test))
+            clf = svm.LinearSVC(random_state=1).fit(x_train, label_train)
+            x_test=mi.transform(vectorizer.transform(x_test))
 
-            test_test_predict = clf.predict(new_x_test)
+            test_test_predict = clf.predict(x_test)
             acc_m.append(accuracy_score(label_test, test_test_predict))
             k=math.floor(limit*80/100)
         else:
-            new_x_train,new_x_test=transform_features(new_x_train,new_x_test,score,k,upperlimmit)
-            upperlimmit=math.floor(k)-1
-
+            new_x_train,new_x_test=bench.transform_features(x_train,x_test,score,k)
 
             clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
 
