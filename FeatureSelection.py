@@ -40,14 +40,14 @@ class FeatureSelection():
                 self.x_train.append(text1)
                 self.is_wknd_train.append(row['is_wkdn'])
                 self.y_train.append(row['topic_bool'])
-                if(row['topic_bool']==1):
-                    filecounter=filecounter+1
-                    self.x_rel_train.append(text1)
-                    temp_list=text1.split()
-                    temp_list=list(set(temp_list))
-                    for x in temp_list:
-                        if x not in self.x_rel_train_pool:
-                            self.x_rel_train_pool.append(x)
+                # if(row['topic_bool']==1):
+                #     filecounter=filecounter+1
+                #     self.x_rel_train.append(text1)
+                #     temp_list=text1.split()
+                #     temp_list=list(set(temp_list))
+                #     for x in temp_list:
+                #         if x not in self.x_rel_train_pool:
+                #             self.x_rel_train_pool.append(x)
             else:
                 self.x_test.append(str(row['text'])+str(row['title']))
                 self.y_test.append(row['topic_bool'])
@@ -365,43 +365,63 @@ class FeatureSelection():
 
 
 
-    def transform_features(self,pool,x_train,x_test):
+    def transform_features(self,x_train,x_test,final_pval,topk,upperlimmit):
 
-        temp_list=[]
-        new_x_train=[]
-        for txt2 in x_train:
-            temp_list=txt2.split()
-            for x in pool:
-                if x in temp_list:
-                    temp_list.remove(x)
-            str1=' '.join(temp_list)
-            temp_list=[]
-            if (str1==''): #for empty documents put nofeaturedetected
-                new_x_train.append("nofeaturedetected")
-            else:
-                new_x_train.append(str1)
-
-        temp_list=[]
-        new_x_test=[]
-        for txt2 in x_test:
-            temp_list=txt2.split()
-            for x in pool:
-                if x in temp_list:
-                    temp_list.remove(x)
-            str1=' '.join(temp_list)
-            temp_list=[]
-            if (str1==''): #for empty documents put nofeaturedetected
-                new_x_test.append("nofeaturedetected")
-            else:
-                new_x_test.append(str1)   
+        #make a list from topk+1 to the end, in order to remove those columns from test and train
+        columns2_sub=[]
+        for x in final_pval[topk:upperlimmit]:
+            columns2_sub.append(x[1])
 
 
-        return new_x_train,new_x_test     
+        ########### TRANSFORM X_TRAIN ############
+        cols = columns2_sub
+        rows = []
+        mat=x_train
+        if len(rows) > 0 and len(cols) > 0:
+            row_mask = self.np.ones(mat.shape[0], dtype=bool)
+            row_mask[rows] = False
+            col_mask = self.np.ones(mat.shape[1], dtype=bool)
+            col_mask[cols] = False
+            x_train= mat[row_mask][:,col_mask]
+        elif len(rows) > 0:
+            mask = self.np.ones(mat.shape[0], dtype=bool)
+            mask[rows] = False
+            x_train= mat[mask]
+        elif len(cols) > 0:
+            mask = self.np.ones(mat.shape[1], dtype=bool)
+            mask[cols] = False
+            x_train= mat[:,mask]
+        else:
+            x_train= mat
+
+        ######## transform x_test ###############
+        cols = columns2_sub
+        rows = []
+        mat=x_test
+        if len(rows) > 0 and len(cols) > 0:
+            row_mask = self.np.ones(mat.shape[0], dtype=bool)
+            row_mask[rows] = False
+            col_mask = self.np.ones(mat.shape[1], dtype=bool)
+            col_mask[cols] = False
+            x_test= mat[row_mask][:,col_mask]
+        elif len(rows) > 0:
+            mask = self.np.ones(mat.shape[0], dtype=bool)
+            mask[rows] = False
+            x_test= mat[mask]
+        elif len(cols) > 0:
+            mask = self.np.ones(mat.shape[1], dtype=bool)
+            mask[cols] = False
+            x_test= mat[:,mask]
+        else:
+            x_test= mat
+
+
+        return x_train,x_test    
 
 
 
 
-    def quick_uniform(self,x_train,y_train,x_test,topk):
+    def quick_uniform(self,x_train,y_train):
         # in the beggining creates a list to subtract all non relevant documents
         # the result in a x_rel matrix containing all the features but only the rel documents
 
@@ -461,63 +481,12 @@ class FeatureSelection():
 
         final_pval=sorted(p_val, key=lambda x: x[0],reverse =True)
         
-
-        #make a list from topk+1 to the end, in order to remove those columns from test and train
-        columns2_sub=[]
-        for x in final_pval[topk+1:None]:
-            columns2_sub.append(x[1])
-
-
-        ########### TRANSFORM X_TRAIN ############
-        cols = columns2_sub
-        rows = []
-        mat=x_train
-        if len(rows) > 0 and len(cols) > 0:
-            row_mask = self.np.ones(mat.shape[0], dtype=bool)
-            row_mask[rows] = False
-            col_mask = self.np.ones(mat.shape[1], dtype=bool)
-            col_mask[cols] = False
-            x_train= mat[row_mask][:,col_mask]
-        elif len(rows) > 0:
-            mask = self.np.ones(mat.shape[0], dtype=bool)
-            mask[rows] = False
-            x_train= mat[mask]
-        elif len(cols) > 0:
-            mask = self.np.ones(mat.shape[1], dtype=bool)
-            mask[cols] = False
-            x_train= mat[:,mask]
-        else:
-            x_train= mat
-
-        ######## transform x_test ###############
-        cols = columns2_sub
-        rows = []
-        mat=x_test
-        if len(rows) > 0 and len(cols) > 0:
-            row_mask = self.np.ones(mat.shape[0], dtype=bool)
-            row_mask[rows] = False
-            col_mask = self.np.ones(mat.shape[1], dtype=bool)
-            col_mask[cols] = False
-            x_test= mat[row_mask][:,col_mask]
-        elif len(rows) > 0:
-            mask = self.np.ones(mat.shape[0], dtype=bool)
-            mask[rows] = False
-            x_test= mat[mask]
-        elif len(cols) > 0:
-            mask = self.np.ones(mat.shape[1], dtype=bool)
-            mask[cols] = False
-            x_test= mat[:,mask]
-        else:
-            x_test= mat
-
-
-        return x_train,x_test
+        return final_pval
 
 
 
 
-
-    def quick_rdf(self,x_train,y_train,x_test,topk):
+    def quick_rdf(self,x_train,y_train):
         # in the beggining creates a list to subtract all non relevant documents
         # the result in a x_rel matrix containing all the features but only the rel documents
 
@@ -566,58 +535,9 @@ class FeatureSelection():
             k=k+1
 
         final_score=sorted(score, key=lambda x: x[0],reverse =True)
+
+        return final_score
         
-
-        #make a list from topk+1 to the end, in order to remove those columns from test and train
-        columns2_sub=[]
-        for x in final_score[topk+1:None]:
-            columns2_sub.append(x[1])
-
-
-        ########### TRANSFORM X_TRAIN ############
-        cols = columns2_sub
-        rows = []
-        mat=x_train
-        if len(rows) > 0 and len(cols) > 0:
-            row_mask = self.np.ones(mat.shape[0], dtype=bool)
-            row_mask[rows] = False
-            col_mask = self.np.ones(mat.shape[1], dtype=bool)
-            col_mask[cols] = False
-            x_train= mat[row_mask][:,col_mask]
-        elif len(rows) > 0:
-            mask = self.np.ones(mat.shape[0], dtype=bool)
-            mask[rows] = False
-            x_train= mat[mask]
-        elif len(cols) > 0:
-            mask = self.np.ones(mat.shape[1], dtype=bool)
-            mask[cols] = False
-            x_train= mat[:,mask]
-        else:
-            x_train= mat
-
-        ######## transform x_test ###############
-        cols = columns2_sub
-        rows = []
-        mat=x_test
-        if len(rows) > 0 and len(cols) > 0:
-            row_mask = self.np.ones(mat.shape[0], dtype=bool)
-            row_mask[rows] = False
-            col_mask = self.np.ones(mat.shape[1], dtype=bool)
-            col_mask[cols] = False
-            x_test= mat[row_mask][:,col_mask]
-        elif len(rows) > 0:
-            mask = self.np.ones(mat.shape[0], dtype=bool)
-            mask[rows] = False
-            x_test= mat[mask]
-        elif len(cols) > 0:
-            mask = self.np.ones(mat.shape[1], dtype=bool)
-            mask[cols] = False
-            x_test= mat[:,mask]
-        else:
-            x_test= mat
-
-
-        return x_train,x_test
 
 
 

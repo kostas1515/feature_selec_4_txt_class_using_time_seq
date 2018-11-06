@@ -4,7 +4,7 @@ import pandas as pd
 from sklearn.metrics import classification_report, f1_score, accuracy_score, confusion_matrix
 from sklearn.svm import SVC, LinearSVC
 from sklearn import svm
-from sklearn.feature_extraction.text import  TfidfVectorizer
+from sklearn.feature_extraction.text import  TfidfVectorizer,TfidfTransformer,CountVectorizer
 import matplotlib.pyplot as plt
 from sklearn.feature_selection import SelectKBest, chi2, mutual_info_classif
 import math
@@ -20,49 +20,53 @@ for category in category_matrix:
     for csv in os.listdir("../testspace2/csvs"):
         data = pd.read_csv("../testspace2/csvs/"+csv, encoding = 'iso-8859-1')
         bench.split_data(data)
-
-
+    
+    vectorizer = CountVectorizer(lowercase=False)
+    x_train = vectorizer.fit_transform(bench.x_train)
+    x_test=vectorizer.transform(bench.x_test)
     label_train=bench.y_train
     label_test=bench.y_test
 
 
-    new_x_train,new_x_test=bench.rdf(None)
-    limit=len(bench.rdf_rel_pool)
-    k=limit
+    score=bench.quick_rdf(x_train,label_train)
+
+    feature_amount=len(score)
+    k=feature_amount
     acc_r=[]
     axes=[]
     percent=80
-    rel_pool=bench.rdf_rel_pool
-    while(k>limit*0.001):
-        if(k==limit):
-            vectorizer = TfidfVectorizer(lowercase=False)
-            n_x = vectorizer.fit_transform(new_x_train)
-            clf = svm.LinearSVC().fit(n_x, label_train)
-            array3=vectorizer.transform(new_x_test)
-            test_test_predict = clf.predict(array3)
+    while(k>feature_amount*0.001):
+        if(k==feature_amount):
+            upperlimmit=None
+            new_x_train,new_x_test=transform_features(x_train,x_test,score,k,upperlimmit)
+
+            t_vectorizer = TfidfTransformer()
+            new_x_train = t_vectorizer.fit_transform(new_x_train)
+
+            clf = svm.LinearSVC(random_state=1).fit(n_x, label_train)
+            new_x_test=t_vectorizer.transform(new_x_test)
+
+            test_test_predict = clf.predict(new_x_test)
             acc_r.append(accuracy_score(label_test, test_test_predict))
-            k=limit*80/100
+
+            k=math.floor(feature_amount*80/100)
             upperlimmit=None
             axes.append(100)
         else:
-            pool_2_sub=rel_pool[math.ceil(k):upperlimmit]
-            upperlimmit=math.ceil(k)-1
-            
-            #feature removal, new set extraction
-            n_x_train,new_x_test=bench.transform_features(pool_2_sub,new_x_train,new_x_test)
+
+            new_x_train,new_x_test=transform_features(new_x_train,new_x_test,score,k,upperlimmit)
+            upperlimmit=math.floor(k)-1
             
             #classification
-            vectorizer = TfidfVectorizer(lowercase=False)
-            n_x = vectorizer.fit_transform(n_x_train)
-            clf = svm.LinearSVC().fit(n_x, label_train)
-            array3=vectorizer.transform(new_x_test)
-            test_test_predict = clf.predict(array3)
+
+            clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
+            test_test_predict = clf.predict(new_x_test)
 
 
             acc_r.append(accuracy_score(label_test, test_test_predict))
             axes.append(percent)
             percent=percent/2
-            k=k/2
+            k=math.floor(k/2)
 
     df["axes"]=axes
     df["rdf_acc"]=acc_r
@@ -75,42 +79,49 @@ for category in category_matrix:
 
     ################## SINGLE UNIFORM ##############################
 
-    new_x_train,new_x_test=bench.uniform('single',decision_thres=0.5,topk=None)
     # bench.rdf(topk=1000)
     # bench.uniform('single',decision_thres=0.5,topk=1000)
     # bench.random_select(1000)
     # new_x_train=bench.x_train #for chi squere only
 
-    limit=len(bench.uniform_feat_pool)
-    k=limit
-    rel_pool=bench.uniform_feat_pool
-    acc=[]
-    while(k>limit*0.001):
-        if(k==limit):
-            vectorizer = TfidfVectorizer(lowercase=False)
-            n_x = vectorizer.fit_transform(new_x_train)
-            clf = svm.LinearSVC().fit(n_x, label_train)
-            array3=vectorizer.transform(new_x_test)
-            test_test_predict = clf.predict(array3)
-            acc.append(accuracy_score(label_test, test_test_predict))
-            k=limit*80/100
+    score=bench.quick_uniform(x_train,label_train)
+
+    feature_amount=len(score)
+    k=feature_amount
+    acc_u=[]
+    axes=[]
+    percent=80
+    while(k>feature_amount*0.001):
+        if(k==feature_amount):
             upperlimmit=None
+            new_x_train,new_x_test=transform_features(x_train,x_test,score,k,upperlimmit)
+
+            t_vectorizer = TfidfTransformer()
+            new_x_train = t_vectorizer.fit_transform(new_x_train)
+            clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
+
+            new_x_test=t_vectorizer.transform(new_x_test)
+            test_test_predict = clf.predict(new_x_test)
+            acc_u.append(accuracy_score(label_test, test_test_predict))
+
+            k=math.floor(feature_amount*80/100)
+            upperlimmit=None
+
         else:
-            pool_2_sub=rel_pool[math.ceil(k):upperlimmit]
-            upperlimmit=math.ceil(k)-1
+
+            new_x_train,new_x_test=transform_features(new_x_train,new_x_test,score,k,upperlimmit)
+            upperlimmit=math.floor(k)-1
             
-            #feature removal, new set extraction
-            new_x_train,new_x_test=bench.transform_features(pool_2_sub,new_x_train,new_x_test)
+            #classification
+            
+            clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
+            test_test_predict = clf.predict(new_x_test)
 
-            vectorizer = TfidfVectorizer(lowercase=False)
-            n_x = vectorizer.fit_transform(new_x_train)
-            clf = svm.LinearSVC().fit(n_x, label_train)
-            array3=vectorizer.transform(new_x_test)
-            test_test_predict = clf.predict(array3)
-            acc.append(accuracy_score(label_test, test_test_predict))
-            k=k/2
 
-    df["uniform_acc"]=acc
+            acc_u.append(accuracy_score(label_test, test_test_predict))
+            k=math.floor(k/2)
+
+    df["uniform_acc"]=acc_u
 
 
     ##################  CHI2 ##############################
@@ -123,40 +134,42 @@ for category in category_matrix:
     acc_x=[]
     while(k>0.001*limit):
         if(k==100.2):
-            vectorizer = TfidfVectorizer(lowercase=False)
-            n_x = vectorizer.fit_transform(new_x_train)
-            limit=len(vectorizer.get_feature_names())
-            features=vectorizer.get_feature_names()
-            ch2 = SelectKBest(chi2, k="all")
-            n_x = ch2.fit_transform(n_x, label_train)
-            scores=ch2.scores_ #get the list of scores and corresponding features
-
-            d = {'feat': features,'score': scores}# make a list of best features regarding chi2   
-            feat_score = pd.DataFrame(data=d)
-            sort_feat_score=feat_score.sort_values('score',ascending=False)
-            pool=sort_feat_score['feat'][0:None].tolist()
-
-            clf = svm.LinearSVC(random_state=1).fit(n_x, label_train)
-            array3=ch2.transform(vectorizer.transform(x_test))
-            test_test_predict = clf.predict(array3)
-            acc_x.append(accuracy_score(label_test, test_test_predict))
-            k=limit*80/100
             upperlimmit=None
-        else:
-            pool_2_sub=pool[math.ceil(k):upperlimmit]
-            upperlimmit=math.ceil(k)-1
-
-            #feature removal, new set extraction
-            new_x_train,new_x_test=bench.transform_features(pool_2_sub,new_x_train,x_test)
-
             vectorizer = TfidfVectorizer(lowercase=False)
-            n_x = vectorizer.fit_transform(new_x_train)
+            new_x_train = vectorizer.fit_transform(new_x_train)
 
-            clf = svm.LinearSVC(random_state=1).fit(n_x, label_train)
-            array3=vectorizer.transform(new_x_test)
-            test_test_predict = clf.predict(array3)
+
+            ch2 = SelectKBest(chi2, k="all")
+            new_x_train = ch2.fit_transform(new_x_train, label_train)
+
+            score=ch2.scores_ #get the list of scores and corresponding features
+            limit=len(score)
+            finalscore=[]   # get the corresponding index of the feauter and the score
+            index=0
+            for s in score:
+                finalscore.append([s,index])
+                index=index+1
+
+            finalscore=sorted(finalscore,key=lambda x: x[0],reverse =True)
+            
+
+            clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
+            new_x_test=ch2.transform(vectorizer.transform(x_test))
+
+            test_test_predict = clf.predict(new_x_test)
             acc_x.append(accuracy_score(label_test, test_test_predict))
-            k=k/2
+            k=math.floor(limit*80/100)
+        else:
+            new_x_train,new_x_test=transform_features(new_x_train,new_x_test,score,k,upperlimmit)
+            upperlimmit=math.floor(k)-1
+
+
+            clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
+
+
+            test_test_predict = clf.predict(new_x_test)
+            acc_x.append(accuracy_score(label_test, test_test_predict))
+            k=math.floor(k/2)
     
     df["chi2_acc"]=acc_x
     
@@ -167,48 +180,49 @@ for category in category_matrix:
     new_x_train=bench.x_train
     x_test=bench.x_test
 
-
     k=100.2#ignore that
     limit=1000
-    acc_x=[]
+    acc_m=[]
     while(k>0.001*limit):
         if(k==100.2):
-            vectorizer = TfidfVectorizer(lowercase=False)
-            n_x = vectorizer.fit_transform(new_x_train)
-            limit=len(vectorizer.get_feature_names())
-            features=vectorizer.get_feature_names()
-            mi = SelectKBest(mutual_info_classif, k="all")
-            n_x = mi.fit_transform(n_x, label_train)
-            scores=mi.scores_ #get the list of scores and corresponding features
-
-            d = {'feat': features,'score': scores}# make a list of best features regarding mutual_info_classif   
-            feat_score = pd.DataFrame(data=d)
-            sort_feat_score=feat_score.sort_values('score',ascending=False)
-            pool=sort_feat_score['feat'][0:None].tolist()
-
-            clf = svm.LinearSVC(random_state=1).fit(n_x, label_train)
-            array3=mi.transform(vectorizer.transform(x_test))
-            test_test_predict = clf.predict(array3)
-            acc_mi.append(accuracy_score(label_test, test_test_predict))
-            k=limit*80/100
             upperlimmit=None
-        else:
-            pool_2_sub=pool[math.ceil(k):upperlimmit]
-            upperlimmit=math.ceil(k)-1
-
-            #feature removal, new set extraction
-            new_x_train,new_x_test=bench.transform_features(pool_2_sub,new_x_train,x_test)
-
             vectorizer = TfidfVectorizer(lowercase=False)
-            n_x = vectorizer.fit_transform(new_x_train)
+            new_x_train = vectorizer.fit_transform(new_x_train)
 
-            clf = svm.LinearSVC(random_state=1).fit(n_x, label_train)
-            array3=vectorizer.transform(new_x_test)
-            test_test_predict = clf.predict(array3)
-            acc_mi.append(accuracy_score(label_test, test_test_predict))
-            k=k/2
+
+            mi = SelectKBest(mutual_info_classif, k="all")
+            new_x_train = mi.fit_transform(new_x_train, label_train)
+
+            score=mi.scores_ #get the list of scores and corresponding features
+            limit=len(score)
+            finalscore=[]   # get the corresponding index of the feauter and the score
+            index=0
+            for s in score:
+                finalscore.append([s,index])
+                index=index+1
+
+            finalscore=sorted(finalscore,key=lambda x: x[0],reverse =True)
+            
+
+            clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
+            new_x_test=mi.transform(vectorizer.transform(x_test))
+
+            test_test_predict = clf.predict(new_x_test)
+            acc_m.append(accuracy_score(label_test, test_test_predict))
+            k=math.floor(limit*80/100)
+        else:
+            new_x_train,new_x_test=transform_features(new_x_train,new_x_test,score,k,upperlimmit)
+            upperlimmit=math.floor(k)-1
+
+
+            clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
+
+
+            test_test_predict = clf.predict(new_x_test)
+            acc_m.append(accuracy_score(label_test, test_test_predict))
+            k=math.floor(k/2)
     
-    df["mutual_information"]=acc_mi
+    df["mutual_info_acc"]=acc_m
 
 
 
