@@ -39,19 +39,19 @@ for category in category_matrix:
         if(k==feature_amount):
 
             t_vectorizer = TfidfTransformer()
-            x_train = t_vectorizer.fit_transform(x_train)
+            x_train_init = t_vectorizer.fit_transform(x_train)
 
-            clf = svm.LinearSVC(random_state=1).fit(x_train, label_train)
-            x_test=t_vectorizer.transform(x_test)
+            clf = svm.LinearSVC(random_state=1).fit(x_train_init, label_train)
+            x_test_init=t_vectorizer.transform(x_test)
 
-            test_test_predict = clf.predict(x_test)
+            test_test_predict = clf.predict(x_test_init)
             acc_r.append(accuracy_score(label_test, test_test_predict))
 
             k=math.floor(feature_amount*80/100)
             axes.append(100)
         else:
 
-            new_x_train,new_x_test=bench.transform_features(x_train,x_test,score,k)
+            new_x_train,new_x_test=bench.transform_features(x_train_init,x_test_init,score,k)
             
             #classification
 
@@ -91,16 +91,16 @@ for category in category_matrix:
         if(k==feature_amount):
 
             t_vectorizer = TfidfTransformer()
-            x_train = t_vectorizer.fit_transform(x_train)
-            clf = svm.LinearSVC(random_state=1).fit(x_train, label_train)
+            x_train_init = t_vectorizer.fit_transform(x_train)
+            clf = svm.LinearSVC(random_state=1).fit(x_train_init, label_train)
 
-            x_test=t_vectorizer.transform(x_test)
-            test_test_predict = clf.predict(x_test)
+            x_test_init=t_vectorizer.transform(x_test)
+            test_test_predict = clf.predict(x_test_init)
             acc_u.append(accuracy_score(label_test, test_test_predict))
 
             k=math.floor(feature_amount*80/100)
         else:
-            new_x_train,new_x_test=bench.transform_features(x_train,x_test,score,k)
+            new_x_train,new_x_test=bench.transform_features(x_train_init,x_test_init,score,k)
             
             #classification
             
@@ -149,7 +149,7 @@ for category in category_matrix:
             acc_x.append(accuracy_score(label_test, test_test_predict))
             k=math.floor(limit*80/100)
         else:
-            new_x_train,new_x_test=bench.transform_features(x_train,x_test,score,k)
+            new_x_train,new_x_test=bench.transform_features(x_train,x_test,finalscore,k)
 
             clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
 
@@ -197,7 +197,7 @@ for category in category_matrix:
             acc_m.append(accuracy_score(label_test, test_test_predict))
             k=math.floor(limit*80/100)
         else:
-            new_x_train,new_x_test=bench.transform_features(x_train,x_test,score,k)
+            new_x_train,new_x_test=bench.transform_features(x_train,x_test,finalscore,k)
 
             clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
 
