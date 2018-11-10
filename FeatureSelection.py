@@ -468,9 +468,11 @@ class FeatureSelection():
         while(k<amount_of_features):#check each feature what is its distribution for non_relevant put 0
             arr=x_rel_train[:,k]
             arr=arr.toarray()
-            arr=self.np.where(arr > 1, 1, 0) # because we need just one, not the total amount of particular feature in that documnt so if there is above zero make it 1 (like binary countvectorizer)
+            arr=self.np.where(arr > 0, 1, 0) # because we need just one, not the total amount of particular feature in that documnt so if there is above zero make it 1 (like binary countvectorizer)
             arr=self.np.cumsum(arr) # make the cummulative sum distribution 
             if (arr[-1]==0): # check if the last aka the sum of the distribution is 0 if it is all elements are 0, put 0 p_val
+                p_val.append([0,k])
+            elif (arr[-1]<=5*amount_of_documents/100):# cutoff threshold of relevant terms to avoid bad behaviour of ks2sample-uniform.
                 p_val.append([0,k])
             else:
                 arr=arr/arr[-1]
