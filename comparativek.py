@@ -14,7 +14,7 @@ category_matrix=["C1","C15","C151","C152","C","E","G","GPOL","M1","M14","M"]
 for category in category_matrix:
     df=pd.DataFrame()
 
-    bench=FeatureSelection(category,26150) #enter target category and the last id of the preffered train_set
+    bench=FeatureSelection(category,389827) #enter target category and the last id of the preffered train_set
     #use relative path
     for csv in os.listdir("../testspace2/csvs"):
         data = pd.read_csv("../testspace2/csvs/"+csv, encoding = 'iso-8859-1')

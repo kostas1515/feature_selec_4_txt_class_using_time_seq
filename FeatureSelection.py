@@ -38,20 +38,20 @@ class FeatureSelection():
             if ( int(row['filename']) < self.partition_by_id ):
                 text1=str(row['text'])+str(row['title'])
                 self.x_train.append(text1)
-                self.is_wknd_train.append(row['is_wkdn'])
+                # self.is_wknd_train.append(row['is_wkdn'])
                 self.y_train.append(row['topic_bool'])
-                # if(row['topic_bool']==1):
-                #     filecounter=filecounter+1
-                #     self.x_rel_train.append(text1)
-                #     temp_list=text1.split()
-                #     temp_list=list(set(temp_list))
-                #     for x in temp_list:
-                #         if x not in self.x_rel_train_pool:
-                #             self.x_rel_train_pool.append(x)
+                if(row['topic_bool']==1):
+                    filecounter=filecounter+1
+                    # self.x_rel_train.append(text1)
+                    # temp_list=text1.split()
+                    # temp_list=list(set(temp_list))
+                    # for x in temp_list:
+                    #     if x not in self.x_rel_train_pool:
+                    #         self.x_rel_train_pool.append(x)
             else:
                 self.x_test.append(str(row['text'])+str(row['title']))
                 self.y_test.append(row['topic_bool'])
-                self.is_wknd_test.append(row['is_wkdn'])
+                # self.is_wknd_test.append(row['is_wkdn'])
         self.file_per_day_array.append(filecounter)
        #returns the x_train y_train x_test and y_test    
 
@@ -532,13 +532,86 @@ class FeatureSelection():
         while(k<amount_of_features):#check each feature what is its distribution for non_relevant put 0
             arr=x_rel_train[:,k]
             arr=arr.toarray()
-            arr=self.np.where(arr > 1, 1, 0) # because we need just one, not the total amount of particular feature in that documnt so if there is above zero make it 1 (like binary countvectorizer)
+            arr=self.np.where(arr > 0, 1, 0) # because we need just one, not the total amount of particular feature in that documnt so if there is above zero make it 1 (like binary countvectorizer)
             score.append([self.np.sum(arr),k]) 
             k=k+1
 
         final_score=sorted(score, key=lambda x: x[0],reverse =True)
 
         return final_score
+
+
+    def quick_uniform2(self,x_train,y_train):
+    # in the beggining creates a list to subtract all non relevant documents
+    # the result in a x_rel matrix containing all the features but only the rel documents
+        file_per_day_array=self.file_per_day_array
+        ind_list2_sub=[] 
+        i=0
+        while(i<len(y_train)):
+            if(y_train[i]==0):
+                ind_list2_sub.append(i)
+            i=i+1
+        
+        # this code removes the rows aka documents to create x_rel matrix
+        cols = []
+        rows = ind_list2_sub
+        mat=x_train
+        if len(rows) > 0 and len(cols) > 0:
+            row_mask = np.ones(mat.shape[0], dtype=bool)
+            row_mask[rows] = False
+            col_mask = np.ones(mat.shape[1], dtype=bool)
+            col_mask[cols] = False
+            x_rel_train= mat[row_mask][:,col_mask]
+        elif len(rows) > 0:
+            mask = np.ones(mat.shape[0], dtype=bool)
+            mask[rows] = False
+            x_rel_train= mat[mask]
+        elif len(cols) > 0:
+            mask = np.ones(mat.shape[1], dtype=bool)
+            mask[cols] = False
+            x_rel_train= mat[:,mask]
+        else:
+            x_rel_train= mat
+            
+
+        amount_of_features=x_rel_train.shape[1]  # these are all the features
+
+
+        opt_uni2=self.np.ones((len(file_per_day_array),1),dtype=int)
+        opt_uni2=self.np.cumsum(opt_uni2)
+        opt_uni2=opt_uni2/opt_uni2[-1]
+
+
+        k=0
+        score=[]
+        day_score=[]
+        doc_per_day=0
+        position=0
+        p_val=[]
+        while(k<amount_of_features):#check each feature what is its distribution for non_relevant put 0
+            arr=x_rel_train[:,k]
+            arr=arr.toarray()
+            arr=self.np.where(arr > 0, 1, 0) # because we need just one, not the total amount of particular feature in that documnt so if there is above zero make it 1 (like binary countvectorizer)
+            while(doc_per_day<len(file_per_day_array)):
+                temp_sum=self.np.sum(arr[position:position+file_per_day_array[doc_per_day]])
+                day_score.append(temp_sum)
+                position=position+file_per_day_array[doc_per_day]
+                doc_per_day=doc_per_day+1
+            doc_per_day=0
+            position=0
+            day_score=self.np.cumsum(day_score)
+            if (day_score[-1]==0):
+                p_val.append([0,k])
+            else:  
+                day_score=day_score/day_score[-1]
+                p=st.ks_2samp(list(opt_uni2),day_score)[1]
+                p_val.append([p,k])
+            day_score=[]
+            k=k+1
+        
+        final_pval=sorted(p_val, key=lambda x: x[0],reverse =True)     
+        return final_pval
+
         
 
 
