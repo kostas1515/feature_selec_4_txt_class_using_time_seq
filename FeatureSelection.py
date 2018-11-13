@@ -557,17 +557,17 @@ class FeatureSelection():
         rows = ind_list2_sub
         mat=x_train
         if len(rows) > 0 and len(cols) > 0:
-            row_mask = np.ones(mat.shape[0], dtype=bool)
+            row_mask = self.np.ones(mat.shape[0], dtype=bool)
             row_mask[rows] = False
-            col_mask = np.ones(mat.shape[1], dtype=bool)
+            col_mask = self.np.ones(mat.shape[1], dtype=bool)
             col_mask[cols] = False
             x_rel_train= mat[row_mask][:,col_mask]
         elif len(rows) > 0:
-            mask = np.ones(mat.shape[0], dtype=bool)
+            mask = self.np.ones(mat.shape[0], dtype=bool)
             mask[rows] = False
             x_rel_train= mat[mask]
         elif len(cols) > 0:
-            mask = np.ones(mat.shape[1], dtype=bool)
+            mask = self.np.ones(mat.shape[1], dtype=bool)
             mask[cols] = False
             x_rel_train= mat[:,mask]
         else:
@@ -604,7 +604,7 @@ class FeatureSelection():
                 p_val.append([0,k])
             else:  
                 day_score=day_score/day_score[-1]
-                p=st.ks_2samp(list(opt_uni2),day_score)[1]
+                p=self.st.ks_2samp(list(opt_uni2),day_score)[1]
                 p_val.append([p,k])
             day_score=[]
             k=k+1
