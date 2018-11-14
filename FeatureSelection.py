@@ -8,8 +8,6 @@ class FeatureSelection():
         import matplotlib.pyplot as plt
         from bisect import bisect_left as bsl
 
-        self.lil=lil
-        self.bsl=bsl
         self.plt=plt
         self.pd=pd
         self.st=st
@@ -27,6 +25,7 @@ class FeatureSelection():
         self.new_x_train=[]
         self.x_rel_train=[] #this contains the relevant train documents
         self.x_rel_train_pool=[] #this contains the feature of the relevant train documents
+        self.list_2_zero=[] # this is a list that keeps all relevant terms that appear 5% or less in train set, these will be given a score 0,as a common start point for all feautereselection methods
 
 
 
@@ -465,6 +464,7 @@ class FeatureSelection():
         opt_uni2=opt_uni2/opt_uni2[-1]
         k=0
         p_val=[]
+        list_2_zero=[] #make this list to actuppon the chi2 and mutual information
         while(k<amount_of_features):#check each feature what is its distribution for non_relevant put 0
             arr=x_rel_train[:,k]
             arr=arr.toarray()
@@ -474,6 +474,7 @@ class FeatureSelection():
                 p_val.append([0,k])
             elif (arr[-1]<=5*amount_of_documents/100):# cutoff threshold of relevant terms to avoid bad behaviour of ks2sample-uniform.
                 p_val.append([0,k])
+                list_2_zero.append(k)
             else:
                 arr=arr/arr[-1]
                 p=self.st.ks_2samp(opt_uni2,arr)[1]
@@ -482,7 +483,7 @@ class FeatureSelection():
 
 
         final_pval=sorted(p_val, key=lambda x: x[0],reverse =True)
-        
+        self.list_2_zero=list_2_zero
         return final_pval
 
 
@@ -533,7 +534,10 @@ class FeatureSelection():
             arr=x_rel_train[:,k]
             arr=arr.toarray()
             arr=self.np.where(arr > 0, 1, 0) # because we need just one, not the total amount of particular feature in that documnt so if there is above zero make it 1 (like binary countvectorizer)
-            score.append([self.np.sum(arr),k]) 
+            if (self.np.sum(arr)<=5*amount_of_documents/100):# do this to have common start point with all methods
+                score.append([0,k])
+            else:
+                score.append([self.np.sum(arr),k]) 
             k=k+1
 
         final_score=sorted(score, key=lambda x: x[0],reverse =True)
@@ -601,6 +605,8 @@ class FeatureSelection():
             position=0
             day_score=self.np.cumsum(day_score)
             if (day_score[-1]==0):
+                p_val.append([0,k])
+            elif (day_score[-1]<=5*amount_of_documents/100):# cutoff threshold of relevant terms to avoid bad behaviour of ks2sample-uniform.
                 p_val.append([0,k])
             else:  
                 day_score=day_score/day_score[-1]
