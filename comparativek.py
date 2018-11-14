@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 from sklearn.feature_selection import SelectKBest, chi2, mutual_info_classif
 import math
 
-
-category_matrix=["C1","C15","C151","C152","C","E","G","GPOL","M1","M14","M"]
+# row['percent_train']>0.02
+category_matrix=["C1","C11","C13","C15","C151","C1511","C152","C17","C171","C18","C181","C2","C21","C24","C3","C31","C4","C","E1","E12","E2","E21","E212","E4","E41","E5","E51","E","G1","G15","G","GCRIM","GDIP","GJOB","GPOL","GSPO","GVIO","M1","M11","M12","M13","M131","M132","M14","M141","M143","M"]
 for category in category_matrix:
     df=pd.DataFrame()
 
@@ -126,7 +126,7 @@ for category in category_matrix:
     acc_x=[]
     while(k>0.001*limit):
         if(k==100.2):
-            vectorizer = TfidfVectorizer(lowercase=False)
+            vectorizer = CountVectorizer(lowercase=False)
             x_train = vectorizer.fit_transform(x_train)
 
 
@@ -140,12 +140,20 @@ for category in category_matrix:
             for s in score:
                 finalscore.append([s,index])
                 index=index+1
+            
+            for x in bench.list_2_zero: #this code makes all features that occour in less than 5% of total rel docs zero
+                finalscore[x]=[0,x]
 
             finalscore=sorted(finalscore,key=lambda x: x[0],reverse =True)
             
+            t_vectorizer = TfidfTransformer()
+            x_train=t_vectorizer.fit_transform(x_train)
 
             clf = svm.LinearSVC(random_state=1).fit(x_train, label_train)
+
+
             x_test=ch2.transform(vectorizer.transform(x_test))
+            x_test=t_vectorizer.transform(x_test)
 
             test_test_predict = clf.predict(x_test)
             acc_x.append(f1_score(label_test, test_test_predict))
@@ -174,7 +182,7 @@ for category in category_matrix:
     acc_m=[]
     while(k>0.001*limit):
         if(k==100.2):
-            vectorizer = TfidfVectorizer(lowercase=False)
+            vectorizer = CountVectorizer(lowercase=False)
             x_train = vectorizer.fit_transform(x_train)
 
 
@@ -189,11 +197,18 @@ for category in category_matrix:
                 finalscore.append([s,index])
                 index=index+1
 
+            for x in bench.list_2_zero: #this code makes all features that occour in less than 5% of total rel docs zero
+                finalscore[x]=[0,x]
+
             finalscore=sorted(finalscore,key=lambda x: x[0],reverse =True)
             
+            t_vectorizer = TfidfTransformer()
+            x_train=t_vectorizer.fit_transform(x_train)
 
             clf = svm.LinearSVC(random_state=1).fit(x_train, label_train)
             x_test=mi.transform(vectorizer.transform(x_test))
+
+            x_test=t_vectorizer.transform(x_test)
 
             test_test_predict = clf.predict(x_test)
             acc_m.append(f1_score(label_test, test_test_predict))
