@@ -420,40 +420,10 @@ class FeatureSelection():
 
 
 
-    def quick_uniform(self,x_train,y_train):
+    def quick_uniform(self,x_rel_train):
         # in the beggining creates a list to subtract all non relevant documents
         # the result in a x_rel matrix containing all the features but only the rel documents
-
-        ind_list2_sub=[] 
-        i=0
-        while(i<len(y_train)):
-            if(y_train[i]==0):
-                ind_list2_sub.append(i)
-            i=i+1
-        
-        # this code removes the rows aka documents to create x_rel matrix
-        cols = []
-        rows = ind_list2_sub
-        mat=x_train
-        if len(rows) > 0 and len(cols) > 0:
-            row_mask = self.np.ones(mat.shape[0], dtype=bool)
-            row_mask[rows] = False
-            col_mask = self.np.ones(mat.shape[1], dtype=bool)
-            col_mask[cols] = False
-            x_rel_train= mat[row_mask][:,col_mask]
-        elif len(rows) > 0:
-            mask = self.np.ones(mat.shape[0], dtype=bool)
-            mask[rows] = False
-            x_rel_train= mat[mask]
-        elif len(cols) > 0:
-            mask = self.np.ones(mat.shape[1], dtype=bool)
-            mask[cols] = False
-            x_rel_train= mat[:,mask]
-        else:
-            x_rel_train= mat
-
-
-
+        x_rel_train=x_rel_train
 
         amount_of_documents=x_rel_train.shape[0] # this is the amount of only relevant documents
         amount_of_features=x_rel_train.shape[1]  # these are all the features
@@ -472,7 +442,7 @@ class FeatureSelection():
             arr=self.np.cumsum(arr) # make the cummulative sum distribution 
             if (arr[-1]==0): # check if the last aka the sum of the distribution is 0 if it is all elements are 0, put 0 p_val
                 p_val.append([0,k])
-            elif (arr[-1]<=5*amount_of_documents/100):# cutoff threshold of relevant terms to avoid bad behaviour of ks2sample-uniform.
+            elif (arr[-1]<=0.1*amount_of_documents/100):# cutoff threshold of relevant terms to avoid bad behaviour of ks2sample-uniform.
                 p_val.append([0,k])
                 list_2_zero.append(k)
             else:
@@ -484,46 +454,16 @@ class FeatureSelection():
 
         final_pval=sorted(p_val, key=lambda x: x[0],reverse =True)
         self.list_2_zero=list_2_zero
+        
         return final_pval
 
 
 
 
-    def quick_rdf(self,x_train,y_train):
+    def quick_rdf(self,x_rel_train):
         # in the beggining creates a list to subtract all non relevant documents
         # the result in a x_rel matrix containing all the features but only the rel documents
-
-        ind_list2_sub=[] 
-        i=0
-        while(i<len(y_train)):
-            if(y_train[i]==0):
-                ind_list2_sub.append(i)
-            i=i+1
-        
-        # this code removes the rows aka documents to create x_rel matrix
-        cols = []
-        rows = ind_list2_sub
-        mat=x_train
-        if len(rows) > 0 and len(cols) > 0:
-            row_mask = self.np.ones(mat.shape[0], dtype=bool)
-            row_mask[rows] = False
-            col_mask = self.np.ones(mat.shape[1], dtype=bool)
-            col_mask[cols] = False
-            x_rel_train= mat[row_mask][:,col_mask]
-        elif len(rows) > 0:
-            mask = self.np.ones(mat.shape[0], dtype=bool)
-            mask[rows] = False
-            x_rel_train= mat[mask]
-        elif len(cols) > 0:
-            mask = self.np.ones(mat.shape[1], dtype=bool)
-            mask[cols] = False
-            x_rel_train= mat[:,mask]
-        else:
-            x_rel_train= mat
-
-
-
-
+        x_rel_train=x_rel_train
         amount_of_documents=x_rel_train.shape[0] # this is the amount of only relevant documents
         amount_of_features=x_rel_train.shape[1]  # these are all the features
 
@@ -534,7 +474,7 @@ class FeatureSelection():
             arr=x_rel_train[:,k]
             arr=arr.toarray()
             arr=self.np.where(arr > 0, 1, 0) # because we need just one, not the total amount of particular feature in that documnt so if there is above zero make it 1 (like binary countvectorizer)
-            if (self.np.sum(arr)<=5*amount_of_documents/100):# do this to have common start point with all methods
+            if (self.np.sum(arr)<=0.1*amount_of_documents/100):# do this to have common start point with all methods
                 score.append([0,k])
             else:
                 score.append([self.np.sum(arr),k]) 
@@ -545,10 +485,8 @@ class FeatureSelection():
         return final_score
 
 
-    def quick_uniform2(self,x_train,y_train):
-    # in the beggining creates a list to subtract all non relevant documents
-    # the result in a x_rel matrix containing all the features but only the rel documents
-        file_per_day_array=self.file_per_day_array
+
+    def get_x_rel_train(self,x_train,y_train):
         ind_list2_sub=[] 
         i=0
         while(i<len(y_train)):
@@ -576,7 +514,16 @@ class FeatureSelection():
             x_rel_train= mat[:,mask]
         else:
             x_rel_train= mat
-            
+
+        return x_rel_train
+
+
+
+    def quick_uniform2(self,x_rel_train):
+    # in the beggining creates a list to subtract all non relevant documents
+    # the result in a x_rel matrix containing all the features but only the rel documents
+        file_per_day_array=self.file_per_day_array
+        x_rel_train=x_rel_train
 
         amount_of_features=x_rel_train.shape[1]  # these are all the features
 
@@ -606,7 +553,7 @@ class FeatureSelection():
             day_score=self.np.cumsum(day_score)
             if (day_score[-1]==0):
                 p_val.append([0,k])
-            elif (day_score[-1]<=5*amount_of_documents/100):# cutoff threshold of relevant terms to avoid bad behaviour of ks2sample-uniform.
+            elif (day_score[-1]<=0.1*amount_of_documents/100):# cutoff threshold of relevant terms to avoid bad behaviour of ks2sample-uniform.
                 p_val.append([0,k])
             else:  
                 day_score=day_score/day_score[-1]

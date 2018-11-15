@@ -1,7 +1,7 @@
 import os
 from FeatureSelection import FeatureSelection
 import pandas as pd
-from sklearn.metrics import classification_report, f1_score, accuracy_score, confusion_matrix
+from sklearn.metrics import classification_report, f1_score, accuracy_score, confusion_matrix,precision_score,recall_score
 from sklearn.svm import SVC, LinearSVC
 from sklearn import svm
 from sklearn.feature_extraction.text import  TfidfVectorizer,TfidfTransformer,CountVectorizer
@@ -13,6 +13,7 @@ import math
 category_matrix=["C1","C11","C13","C15","C151","C1511","C152","C17","C171","C18","C181","C2","C21","C24","C3","C31","C4","C","E1","E12","E2","E21","E212","E4","E41","E5","E51","E","G1","G15","G","GCRIM","GDIP","GJOB","GPOL","GSPO","GVIO","M1","M11","M12","M13","M131","M132","M14","M141","M143","M"]
 for category in category_matrix:
     df=pd.DataFrame()
+    f1=pd.DataFrame()
 
     bench=FeatureSelection(category,389827) #enter target category and the last id of the preffered train_set
     #use relative path
@@ -29,15 +30,18 @@ for category in category_matrix:
     
 
 
+    x_rel_train=bench.get_x_rel_train(x_train,label_train)
 
-    score=bench.quick_rdf(x_train,label_train)
+    score=bench.quick_rdf(x_rel_train)
 
     feature_amount=len(score)
     k=feature_amount
-    acc_r=[]
+    fm=[]
+    p_r=[]
+    r_r=[]
     axes=[]
-    percent=80
-    while(k>feature_amount*0.001):
+    percent=50
+    while(k>feature_amount*0.01):
         if(k==feature_amount):
 
             t_vectorizer = TfidfTransformer()
@@ -47,9 +51,11 @@ for category in category_matrix:
             x_test_init=t_vectorizer.transform(x_test)
 
             test_test_predict = clf.predict(x_test_init)
-            acc_r.append(f1_score(label_test, test_test_predict))
+            p_r.append(precision_score(label_test, test_test_predict))
+            r_r.append(recall_score(label_test, test_test_predict))
+            fm.append(f1_score(label_test, test_test_predict))
 
-            k=math.floor(feature_amount*80/100)
+            k=math.floor(feature_amount*50/100)
             axes.append(100)
         else:
 
@@ -61,13 +67,20 @@ for category in category_matrix:
             test_test_predict = clf.predict(new_x_test)
 
 
-            acc_r.append(f1_score(label_test, test_test_predict))
+            p_r.append(precision_score(label_test, test_test_predict))
+            r_r.append(recall_score(label_test, test_test_predict))
+            fm.append(f1_score(label_test, test_test_predict))
+
             axes.append(percent)
             percent=percent/2
             k=math.floor(k/2)
 
     df["axes"]=axes
-    df["rdf_acc"]=acc_r
+    f1["axes"]=axes
+    df["rdf_p"]=p_r
+    df["rdf_r"]=r_r
+    f1["rdf_f1"]=fm
+
 
 
 
@@ -82,14 +95,14 @@ for category in category_matrix:
     # bench.random_select(1000)
     # new_x_train=bench.x_train #for chi squere only
 
-    score=bench.quick_uniform(x_train,label_train)
+    score=bench.quick_uniform(x_rel_train)
 
     feature_amount=len(score)
     k=feature_amount
-    acc_u=[]
-    axes=[]
-    percent=80
-    while(k>feature_amount*0.001):
+    p_u=[]
+    r_u=[]
+    fm=[]
+    while(k>feature_amount*0.01):
         if(k==feature_amount):
 
             t_vectorizer = TfidfTransformer()
@@ -98,9 +111,11 @@ for category in category_matrix:
 
             x_test_init=t_vectorizer.transform(x_test)
             test_test_predict = clf.predict(x_test_init)
-            acc_u.append(f1_score(label_test, test_test_predict))
+            p_u.append(precision_score(label_test, test_test_predict))
+            r_u.append(recall_score(label_test, test_test_predict))
+            fm.append(f1_score(label_test, test_test_predict))
 
-            k=math.floor(feature_amount*80/100)
+            k=math.floor(feature_amount*50/100)
         else:
             new_x_train,new_x_test=bench.transform_features(x_train_init,x_test_init,score,k)
             
@@ -110,10 +125,57 @@ for category in category_matrix:
             test_test_predict = clf.predict(new_x_test)
 
 
-            acc_u.append(f1_score(label_test, test_test_predict))
+            p_u.append(precision_score(label_test, test_test_predict))
+            r_u.append(recall_score(label_test, test_test_predict))
+            fm.append(f1_score(label_test, test_test_predict))
+
             k=math.floor(k/2)
 
-    df["uniform_acc"]=acc_u
+    df["uniformO_p"]=p_u
+    df["uniformO_r"]=r_u
+    f1["uniformO_f1"]=fm
+
+
+    score=bench.quick_uniform2(x_rel_train)
+
+    feature_amount=len(score)
+    k=feature_amount
+    p_u=[]
+    r_u=[]
+    fm=[]
+
+    while(k>feature_amount*0.01):
+        if(k==feature_amount):
+
+            t_vectorizer = TfidfTransformer()
+            x_train_init = t_vectorizer.fit_transform(x_train)
+            clf = svm.LinearSVC(random_state=1).fit(x_train_init, label_train)
+
+            x_test_init=t_vectorizer.transform(x_test)
+            test_test_predict = clf.predict(x_test_init)
+
+            p_u.append(precision_score(label_test, test_test_predict))
+            r_u.append(recall_score(label_test, test_test_predict))
+            fm.append(f1_score(label_test, test_test_predict))
+
+            k=math.floor(feature_amount*50/100)
+        else:
+            new_x_train,new_x_test=bench.transform_features(x_train_init,x_test_init,score,k)
+            
+            #classification
+            
+            clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
+            test_test_predict = clf.predict(new_x_test)
+
+
+            p_u.append(precision_score(label_test, test_test_predict))
+            r_u.append(recall_score(label_test, test_test_predict))
+            fm.append(f1_score(label_test, test_test_predict))
+            k=math.floor(k/2)
+
+    df["uniformS_p"]=p_u
+    df["uniformS_r"]=r_u
+    f1["uniformS_f1"]=fm
 
 
     ##################  CHI2 ##############################
@@ -123,8 +185,10 @@ for category in category_matrix:
 
     k=100.2#ignore that
     limit=1000
-    acc_x=[]
-    while(k>0.001*limit):
+    p_x=[]
+    r_x=[]
+    fm=[]
+    while(k>0.01*limit):
         if(k==100.2):
             vectorizer = CountVectorizer(lowercase=False)
             x_train = vectorizer.fit_transform(x_train)
@@ -156,8 +220,12 @@ for category in category_matrix:
             x_test=t_vectorizer.transform(x_test)
 
             test_test_predict = clf.predict(x_test)
-            acc_x.append(f1_score(label_test, test_test_predict))
-            k=math.floor(limit*80/100)
+
+            p_x.append(precision_score(label_test, test_test_predict))
+            r_x.append(recall_score(label_test, test_test_predict))
+            fm.append(f1_score(label_test, test_test_predict))
+
+            k=math.floor(limit*50/100)
         else:
             new_x_train,new_x_test=bench.transform_features(x_train,x_test,finalscore,k)
 
@@ -165,10 +233,16 @@ for category in category_matrix:
 
 
             test_test_predict = clf.predict(new_x_test)
-            acc_x.append(f1_score(label_test, test_test_predict))
+
+            p_x.append(precision_score(label_test, test_test_predict))
+            r_x.append(recall_score(label_test, test_test_predict))
+            fm.append(f1_score(label_test, test_test_predict))
+
             k=math.floor(k/2)
     
-    df["chi2_acc"]=acc_x
+    df["chi2_p"]=p_x
+    df["chi2_r"]=r_x
+    f1["chi2_f1"]=fm
     
 
 
@@ -179,8 +253,10 @@ for category in category_matrix:
 
     k=100.2#ignore that
     limit=1000
-    acc_m=[]
-    while(k>0.001*limit):
+    p_m=[]
+    r_m=[]
+    fm=[]
+    while(k>0.01*limit):
         if(k==100.2):
             vectorizer = CountVectorizer(lowercase=False)
             x_train = vectorizer.fit_transform(x_train)
@@ -211,8 +287,12 @@ for category in category_matrix:
             x_test=t_vectorizer.transform(x_test)
 
             test_test_predict = clf.predict(x_test)
-            acc_m.append(f1_score(label_test, test_test_predict))
-            k=math.floor(limit*80/100)
+
+            p_m.append(precision_score(label_test, test_test_predict))
+            r_m.append(recall_score(label_test, test_test_predict))
+            fm.append(f1_score(label_test, test_test_predict))
+
+            k=math.floor(limit*50/100)
         else:
             new_x_train,new_x_test=bench.transform_features(x_train,x_test,finalscore,k)
 
@@ -220,14 +300,22 @@ for category in category_matrix:
 
 
             test_test_predict = clf.predict(new_x_test)
-            acc_m.append(f1_score(label_test, test_test_predict))
+
+            p_m.append(precision_score(label_test, test_test_predict))
+            r_m.append(recall_score(label_test, test_test_predict))
+            fm.append(f1_score(label_test, test_test_predict))
+
             k=math.floor(k/2)
     
-    df["mutual_info_acc"]=acc_m
+    df["mutual_info_p"]=p_m
+    df["mutual_info_r"]=r_m
+    f1["mutual_info_f1"]=fm
 
 
 
-    df.to_csv('csvs/' + category+'.csv', index=False)        
+    df.to_csv('csvs/p_r/' + category+'.csv', index=False)
+    f1.to_csv('csvs/f1/' + category+'.csv', index=False)
+
 
 
 
