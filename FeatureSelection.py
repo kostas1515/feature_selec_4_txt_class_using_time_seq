@@ -438,15 +438,12 @@ class FeatureSelection():
         while(k<amount_of_features):#check each feature what is its distribution for non_relevant put 0
             arr=x_rel_train[:,k]
             arr=arr.toarray()
-            arr=self.np.where(arr > 0, 1, 0) # because we need just one, not the total amount of particular feature in that documnt so if there is above zero make it 1 (like binary countvectorizer)
-            arr=self.np.cumsum(arr) # make the cummulative sum distribution 
-            if (arr[-1]==0): # check if the last aka the sum of the distribution is 0 if it is all elements are 0, put 0 p_val
-                p_val.append([0,k])
-            elif (arr[-1]<=0.1*amount_of_documents/100):# cutoff threshold of relevant terms to avoid bad behaviour of ks2sample-uniform.
+            arr=self.np.where(arr > 0, 1, 0) # because we need just one, not the total amount of particular feature in that documnt so if there is above zero make it 1 (like binary countvectorizer) 
+            if (self.np.sum(arr)<=0.1*amount_of_documents/100):# cutoff threshold of relevant terms to avoid bad behaviour of ks2sample-uniform.
                 p_val.append([0,k])
                 list_2_zero.append(k)
             else:
-                arr=arr/arr[-1]
+                arr=arr/self.np.sum(arr)
                 p=self.st.ks_2samp(opt_uni2,arr)[1]
                 p_val.append([p,k])
             k=k+1
@@ -550,13 +547,10 @@ class FeatureSelection():
                 doc_per_day=doc_per_day+1
             doc_per_day=0
             position=0
-            day_score=self.np.cumsum(day_score)
-            if (day_score[-1]==0):
-                p_val.append([0,k])
-            elif (day_score[-1]<=0.1*amount_of_documents/100):# cutoff threshold of relevant terms to avoid bad behaviour of ks2sample-uniform.
+            if (self.np.sum(day_score)<=0.1*amount_of_documents/100):# cutoff threshold of relevant terms to avoid bad behaviour of ks2sample-uniform.
                 p_val.append([0,k])
             else:  
-                day_score=day_score/day_score[-1]
+                day_score=day_score/self.np.sum(day_score)
                 p=self.st.ks_2samp(list(opt_uni2),day_score)[1]
                 p_val.append([p,k])
             day_score=[]
