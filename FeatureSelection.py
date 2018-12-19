@@ -3,11 +3,12 @@ class FeatureSelection():
         from sklearn.feature_extraction.text import CountVectorizer
         import numpy as np
         from scipy import stats as st
-        from scipy.sparse import lil_matrix as lil 
+        from scipy import sparse as sp 
         import pandas as pd 
         import matplotlib.pyplot as plt
-        from bisect import bisect_left as bsl
 
+
+        self.sp=sp
         self.plt=plt
         self.pd=pd
         self.st=st
@@ -483,35 +484,45 @@ class FeatureSelection():
 
 
     def get_x_rel_train(self,x_train,y_train):
-        ind_list2_sub=[] 
-        i=0
-        while(i<len(y_train)):
-            if(y_train[i]==0):
-                ind_list2_sub.append(i)
-            i=i+1
-        
-        # this code removes the rows aka documents to create x_rel matrix
-        cols = []
-        rows = ind_list2_sub
-        mat=x_train
-        if len(rows) > 0 and len(cols) > 0:
-            row_mask = self.np.ones(mat.shape[0], dtype=bool)
-            row_mask[rows] = False
-            col_mask = self.np.ones(mat.shape[1], dtype=bool)
-            col_mask[cols] = False
-            x_rel_train= mat[row_mask][:,col_mask]
-        elif len(rows) > 0:
-            mask = self.np.ones(mat.shape[0], dtype=bool)
-            mask[rows] = False
-            x_rel_train= mat[mask]
-        elif len(cols) > 0:
-            mask = self.np.ones(mat.shape[1], dtype=bool)
-            mask[cols] = False
-            x_rel_train= mat[:,mask]
-        else:
-            x_rel_train= mat
+        #the purpose of this function is to remove the non relevant documents and  get only the relevant corpus in a count_vectorizing fashion
 
-        return x_rel_train
+        y = self.sp.spdiags(y_train, 0, len(y_train), len(y_train)) #diagonal matrix containing the y_train
+
+        result= y * x_train # the result is the initial x_train matrix containing zero-rows according to the y_train
+
+        result = result[result.getnnz(1)>0]  # this code removes all zero-element- rows
+
+        #the result is a matrix (n_features * n_rel_docs)
+
+        # ind_list2_sub=[] 
+        # i=0
+        # while(i<len(y_train)):
+        #     if(y_train[i]==0):
+        #         ind_list2_sub.append(i)
+        #     i=i+1
+        
+        # # this code removes the rows aka documents to create x_rel matrix
+        # cols = []
+        # rows = ind_list2_sub
+        # mat=x_train
+        # if len(rows) > 0 and len(cols) > 0:
+        #     row_mask = self.np.ones(mat.shape[0], dtype=bool)
+        #     row_mask[rows] = False
+        #     col_mask = self.np.ones(mat.shape[1], dtype=bool)
+        #     col_mask[cols] = False
+        #     x_rel_train= mat[row_mask][:,col_mask]
+        # elif len(rows) > 0:
+        #     mask = self.np.ones(mat.shape[0], dtype=bool)
+        #     mask[rows] = False
+        #     x_rel_train= mat[mask]
+        # elif len(cols) > 0:
+        #     mask = self.np.ones(mat.shape[1], dtype=bool)
+        #     mask[cols] = False
+        #     x_rel_train= mat[:,mask]
+        # else:
+        #     x_rel_train= mat
+
+        return result
 
 
 
@@ -522,9 +533,10 @@ class FeatureSelection():
         x_rel_train=x_rel_train
 
         amount_of_features=x_rel_train.shape[1]  # these are all the features
+        amount_of_documents=x_rel_train.shape[0]
 
 
-        opt_uni2=self.np.ones((len(file_per_day_array),1),dtype=int)
+        opt_uni2=self.np.ones((len(file_per_day_array),1),dtype=int).flatten()
 
 
         k=0
