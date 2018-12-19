@@ -10,7 +10,7 @@ from sklearn.feature_selection import SelectKBest, chi2, mutual_info_classif
 import math
 
 # row['percent_train']>0.02
-category_matrix=["C1","C11","C13","C15","C151","C1511","C152","C17","C171","C18","C181","C2","C21","C24","C3","C31","C4","C","E1","E12","E2","E21","E212","E4","E41","E5","E51","E","G1","G15","G","GCRIM","GDIP","GJOB","GPOL","GSPO","GVIO","M1","M11","M12","M13","M131","M132","M14","M141","M143","M"]
+category_matrix=["C172","C18","C181","C313","GCRIM","GDIS","GFAS","GJOB","GSCI","GVOTE","GWEA","C183","C22","C32","C411","E13","E212","C173"]
 for category in category_matrix:
     df=pd.DataFrame()
     f1=pd.DataFrame()
@@ -205,8 +205,8 @@ for category in category_matrix:
                 finalscore.append([s,index])
                 index=index+1
             
-            for x in bench.list_2_zero: #this code makes all features that occour in less than 5% of total rel docs zero
-                finalscore[x]=[0,x]
+            # for x in bench.list_2_zero: #this code makes all features that occour in less than 5% of total rel docs zero
+            #     finalscore[x]=[0,x]
 
             finalscore=sorted(finalscore,key=lambda x: x[0],reverse =True)
             
@@ -273,8 +273,8 @@ for category in category_matrix:
                 finalscore.append([s,index])
                 index=index+1
 
-            for x in bench.list_2_zero: #this code makes all features that occour in less than 5% of total rel docs zero
-                finalscore[x]=[0,x]
+            # for x in bench.list_2_zero: #this code makes all features that occour in less than 5% of total rel docs zero
+            #     finalscore[x]=[0,x]
 
             finalscore=sorted(finalscore,key=lambda x: x[0],reverse =True)
             
