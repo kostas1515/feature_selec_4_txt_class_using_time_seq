@@ -365,55 +365,71 @@ class FeatureSelection():
 
 
 
-    def transform_features(self,x_train,x_test,final_pval,topk):
+    def transform_features(self,x_train,x_test,score,threshold):
 
         #make a list from topk+1 to the end, in order to remove those columns from test and train
-        columns2_sub=[]
-        for x in final_pval[topk:None]:
-            columns2_sub.append(x[1])
+        # columns2_sub=[]
+        # for x in final_pval[topk:None]:
+        #     columns2_sub.append(x[1])
 
 
-        ########### TRANSFORM X_TRAIN ############
-        cols = columns2_sub
-        rows = []
-        mat=x_train
-        if len(rows) > 0 and len(cols) > 0:
-            row_mask = self.np.ones(mat.shape[0], dtype=bool)
-            row_mask[rows] = False
-            col_mask = self.np.ones(mat.shape[1], dtype=bool)
-            col_mask[cols] = False
-            x_train= mat[row_mask][:,col_mask]
-        elif len(rows) > 0:
-            mask = self.np.ones(mat.shape[0], dtype=bool)
-            mask[rows] = False
-            x_train= mat[mask]
-        elif len(cols) > 0:
-            mask = self.np.ones(mat.shape[1], dtype=bool)
-            mask[cols] = False
-            x_train= mat[:,mask]
-        else:
-            x_train= mat
+        # ########### TRANSFORM X_TRAIN ############
+        arr=self.np.matrix(score) # transform the list into a matrix
+        arr=self.np.where(arr > threshold, 1, 0) # select only those features above threshold, make them 1 others zero
 
-        ######## transform x_test ###############
-        cols = columns2_sub
-        rows = []
-        mat=x_test
-        if len(rows) > 0 and len(cols) > 0:
-            row_mask = self.np.ones(mat.shape[0], dtype=bool)
-            row_mask[rows] = False
-            col_mask = self.np.ones(mat.shape[1], dtype=bool)
-            col_mask[cols] = False
-            x_test= mat[row_mask][:,col_mask]
-        elif len(rows) > 0:
-            mask = self.np.ones(mat.shape[0], dtype=bool)
-            mask[rows] = False
-            x_test= mat[mask]
-        elif len(cols) > 0:
-            mask = self.np.ones(mat.shape[1], dtype=bool)
-            mask[cols] = False
-            x_test= mat[:,mask]
-        else:
-            x_test= mat
+        y = self.sp.sparse.spdiags(arr, 0, arr.size, arr.size) # this is the diagonal matrix containing only the selected indices as 1
+        # y matrix is n_features * n_features with ones in selected indices and zeros otherwise
+        
+        x_train=x_train * y  # [docs x n_features] * [ n_features x n_features] this gives the transformed x_train 
+        x_train = x_train[:,x_train.getnnz(0)>0] # this removes columns aka features that have only zeros
+
+        x_test=x_test * y  # [docs x n_features] * [ n_features x n_features] this gives the transformed x_test 
+        x_test = x_test[:,x_test.getnnz(0)>0] # this removes columns aka features that have only zeros
+
+
+
+
+
+        # cols = columns2_sub
+        # rows = []
+        # mat=x_train
+        # if len(rows) > 0 and len(cols) > 0:
+        #     row_mask = self.np.ones(mat.shape[0], dtype=bool)
+        #     row_mask[rows] = False
+        #     col_mask = self.np.ones(mat.shape[1], dtype=bool)
+        #     col_mask[cols] = False
+        #     x_train= mat[row_mask][:,col_mask]
+        # elif len(rows) > 0:
+        #     mask = self.np.ones(mat.shape[0], dtype=bool)
+        #     mask[rows] = False
+        #     x_train= mat[mask]
+        # elif len(cols) > 0:
+        #     mask = self.np.ones(mat.shape[1], dtype=bool)
+        #     mask[cols] = False
+        #     x_train= mat[:,mask]
+        # else:
+        #     x_train= mat
+
+        # ######## transform x_test ###############
+        # cols = columns2_sub
+        # rows = []
+        # mat=x_test
+        # if len(rows) > 0 and len(cols) > 0:
+        #     row_mask = self.np.ones(mat.shape[0], dtype=bool)
+        #     row_mask[rows] = False
+        #     col_mask = self.np.ones(mat.shape[1], dtype=bool)
+        #     col_mask[cols] = False
+        #     x_test= mat[row_mask][:,col_mask]
+        # elif len(rows) > 0:
+        #     mask = self.np.ones(mat.shape[0], dtype=bool)
+        #     mask[rows] = False
+        #     x_test= mat[mask]
+        # elif len(cols) > 0:
+        #     mask = self.np.ones(mat.shape[1], dtype=bool)
+        #     mask[cols] = False
+        #     x_test= mat[:,mask]
+        # else:
+        #     x_test= mat
 
 
         return x_train,x_test
@@ -448,14 +464,15 @@ class FeatureSelection():
             #     p_val.append([p,k])
             arr=arr.flatten()
             p=self.st.ks_2samp(opt_uni2,arr)[1]
-            p_val.append([p,k])
+            p_val.append(p)
+            #p_val.append([p,k])
             k=k+1
 
 
-        final_pval=sorted(p_val, key=lambda x: x[0],reverse =True)
-        self.list_2_zero=list_2_zero
+        # final_pval=sorted(p_val, key=lambda x: x[0],reverse =True)
+        # self.list_2_zero=list_2_zero
         
-        return final_pval
+        return p_val
 
 
 
@@ -478,12 +495,13 @@ class FeatureSelection():
             #     score.append([0,k])
             # else:
             #     score.append([self.np.sum(arr),k]) 
-            score.append([self.np.sum(arr),k]) 
+            # score.append([self.np.sum(arr),k]) 
+            score.append(self.np.sum(arr))
             k=k+1
 
-        final_score=sorted(score, key=lambda x: x[0],reverse =True)
+        # final_score=sorted(score, key=lambda x: x[0],reverse =True)
 
-        return final_score
+        return score
 
 
 
@@ -566,12 +584,13 @@ class FeatureSelection():
             #     p=self.st.ks_2samp(list(opt_uni2),day_score)[1]
             #     p_val.append([p,k])
             p=self.st.ks_2samp(list(opt_uni2),day_score)[1]
-            p_val.append([p,k])
+            # p_val.append([p,k])
+            p_val.append(p)
             day_score=[]
             k=k+1
         
-        final_pval=sorted(p_val, key=lambda x: x[0],reverse =True)     
-        return final_pval
+        # final_pval=sorted(p_val, key=lambda x: x[0],reverse =True)     
+        return p_val
 
         
 

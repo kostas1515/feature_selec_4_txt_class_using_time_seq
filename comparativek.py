@@ -33,6 +33,7 @@ for category in category_matrix:
     x_rel_train=bench.get_x_rel_train(x_train,label_train)
 
     score=bench.quick_rdf(x_rel_train)
+    score_sorted=sorted(score,reverse=True)
 
     feature_amount=len(score)
     k=feature_amount
@@ -58,8 +59,8 @@ for category in category_matrix:
             k=math.floor(feature_amount*50/100)
             axes.append(100)
         else:
-
-            new_x_train,new_x_test=bench.transform_features(x_train_init,x_test_init,score,k)
+            
+            new_x_train,new_x_test=bench.transform_features(x_train_init,x_test_init,score,score_sorted[k])
             
             #classification
 
@@ -197,27 +198,27 @@ for category in category_matrix:
             ch2 = SelectKBest(chi2, k="all")
             x_train = ch2.fit_transform(x_train, label_train)
 
-            score=ch2.scores_ #get the list of scores and corresponding features
-            limit=len(score)
-            finalscore=[]   # get the corresponding index of the feauter and the score
-            index=0
-            for s in score:
-                finalscore.append([s,index])
-                index=index+1
+            # score=ch2.scores_ #get the list of scores and corresponding features
+            # limit=len(score)
+            # finalscore=[]   # get the corresponding index of the feauter and the score
+            # index=0
+            # for s in score:
+            #     finalscore.append([s,index])
+            #     index=index+1
             
-            # for x in bench.list_2_zero: #this code makes all features that occour in less than 5% of total rel docs zero
-            #     finalscore[x]=[0,x]
+            # # for x in bench.list_2_zero: #this code makes all features that occour in less than 5% of total rel docs zero
+            # #     finalscore[x]=[0,x]
 
-            finalscore=sorted(finalscore,key=lambda x: x[0],reverse =True)
+            # finalscore=sorted(finalscore,key=lambda x: x[0],reverse =True)
             
             t_vectorizer = TfidfTransformer()
-            x_train=t_vectorizer.fit_transform(x_train)
+            new_x_train=t_vectorizer.fit_transform(x_train)
 
-            clf = svm.LinearSVC(random_state=1).fit(x_train, label_train)
+            clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
 
 
             x_test=ch2.transform(vectorizer.transform(x_test))
-            x_test=t_vectorizer.transform(x_test)
+            new_x_test=t_vectorizer.transform(x_test)
 
             test_test_predict = clf.predict(x_test)
 
@@ -227,9 +228,17 @@ for category in category_matrix:
 
             k=math.floor(limit*50/100)
         else:
-            new_x_train,new_x_test=bench.transform_features(x_train,x_test,finalscore,k)
+
+            ch2 = SelectKBest(chi2, k=k)
+            x_train = ch2.fit_transform(x_train, label_train)
+
+            t_vectorizer = TfidfTransformer()
+            new_x_train=t_vectorizer.fit_transform(x_train)
 
             clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
+
+            x_test=ch2.transform(x_test)
+            new_x_test=t_vectorizer.transform(x_test)
 
 
             test_test_predict = clf.predict(new_x_test)
@@ -265,28 +274,28 @@ for category in category_matrix:
             mi = SelectKBest(mutual_info_classif, k="all")
             x_train = mi.fit_transform(x_train, label_train)
 
-            score=mi.scores_ #get the list of scores and corresponding features
-            limit=len(score)
-            finalscore=[]   # get the corresponding index of the feauter and the score
-            index=0
-            for s in score:
-                finalscore.append([s,index])
-                index=index+1
+            # score=mi.scores_ #get the list of scores and corresponding features
+            # limit=len(score)
+            # finalscore=[]   # get the corresponding index of the feauter and the score
+            # index=0
+            # for s in score:
+            #     finalscore.append([s,index])
+            #     index=index+1
 
-            # for x in bench.list_2_zero: #this code makes all features that occour in less than 5% of total rel docs zero
-            #     finalscore[x]=[0,x]
+            # # for x in bench.list_2_zero: #this code makes all features that occour in less than 5% of total rel docs zero
+            # #     finalscore[x]=[0,x]
 
-            finalscore=sorted(finalscore,key=lambda x: x[0],reverse =True)
+            # finalscore=sorted(finalscore,key=lambda x: x[0],reverse =True)
             
             t_vectorizer = TfidfTransformer()
-            x_train=t_vectorizer.fit_transform(x_train)
+            new_x_train=t_vectorizer.fit_transform(x_train)
 
-            clf = svm.LinearSVC(random_state=1).fit(x_train, label_train)
+            clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
             x_test=mi.transform(vectorizer.transform(x_test))
 
-            x_test=t_vectorizer.transform(x_test)
+            new_x_test=t_vectorizer.transform(x_test)
 
-            test_test_predict = clf.predict(x_test)
+            test_test_predict = clf.predict(new_x_test)
 
             p_m.append(precision_score(label_test, test_test_predict))
             r_m.append(recall_score(label_test, test_test_predict))
@@ -294,9 +303,16 @@ for category in category_matrix:
 
             k=math.floor(limit*50/100)
         else:
-            new_x_train,new_x_test=bench.transform_features(x_train,x_test,finalscore,k)
+            mi = SelectKBest(mutual_info_classif, k=k)
+            x_train = mi.fit_transform(x_train, label_train)
+
+            t_vectorizer = TfidfTransformer()
+            new_x_train=t_vectorizer.fit_transform(x_train)
 
             clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
+
+            x_test=mi.transform(x_test)
+            new_x_test=t_vectorizer.transform(x_test)
 
 
             test_test_predict = clf.predict(new_x_test)
@@ -313,8 +329,8 @@ for category in category_matrix:
 
 
 
-    df.to_csv('csvs/p_r/' + category+'.csv', index=False)
-    f1.to_csv('csvs/f1/' + category+'.csv', index=False)
+    df.to_csv('csvs_revised/p_r/' + category+'.csv', index=False)
+    f1.to_csv('csvs_revised/f1/' + category+'.csv', index=False)
 
 
 
