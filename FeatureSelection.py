@@ -377,14 +377,14 @@ class FeatureSelection():
         arr=self.np.matrix(score) # transform the list into a matrix
         arr=self.np.where(arr > threshold, 1, 0) # select only those features above threshold, make them 1 others zero
 
-        y = self.sp.sparse.spdiags(arr, 0, arr.size, arr.size) # this is the diagonal matrix containing only the selected indices as 1
+        y = self.sp.spdiags(arr, 0, arr.size, arr.size) # this is the diagonal matrix containing only the selected indices as 1
         # y matrix is n_features * n_features with ones in selected indices and zeros otherwise
         
         x_train=x_train * y  # [docs x n_features] * [ n_features x n_features] this gives the transformed x_train 
-        x_train = x_train[:,x_train.getnnz(0)>0] # this removes columns aka features that have only zeros
+
 
         x_test=x_test * y  # [docs x n_features] * [ n_features x n_features] this gives the transformed x_test 
-        x_test = x_test[:,x_test.getnnz(0)>0] # this removes columns aka features that have only zeros
+
 
 
 
