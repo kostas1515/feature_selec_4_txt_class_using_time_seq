@@ -97,6 +97,7 @@ for category in category_matrix:
     # new_x_train=bench.x_train #for chi squere only
 
     score=bench.quick_uniform(x_rel_train)
+    score_sorted=sorted(score,reverse=True)
 
     feature_amount=len(score)
     k=feature_amount
@@ -118,7 +119,7 @@ for category in category_matrix:
 
             k=math.floor(feature_amount*50/100)
         else:
-            new_x_train,new_x_test=bench.transform_features(x_train_init,x_test_init,score,k)
+            new_x_train,new_x_test=bench.transform_features(x_train_init,x_test_init,score,score_sorted[k])
             
             #classification
             
@@ -138,6 +139,7 @@ for category in category_matrix:
 
 
     score=bench.quick_uniform2(x_rel_train)
+    score_sorted=sorted(score,reverse=True)
 
     feature_amount=len(score)
     k=feature_amount
@@ -161,7 +163,7 @@ for category in category_matrix:
 
             k=math.floor(feature_amount*50/100)
         else:
-            new_x_train,new_x_test=bench.transform_features(x_train_init,x_test_init,score,k)
+            new_x_train,new_x_test=bench.transform_features(x_train_init,x_test_init,score,score_sorted[k])
             
             #classification
             
@@ -220,7 +222,7 @@ for category in category_matrix:
             x_test=ch2.transform(vectorizer.transform(x_test))
             new_x_test=t_vectorizer.transform(x_test)
 
-            test_test_predict = clf.predict(x_test)
+            test_test_predict = clf.predict(new_x_test)
 
             p_x.append(precision_score(label_test, test_test_predict))
             r_x.append(recall_score(label_test, test_test_predict))
@@ -230,18 +232,16 @@ for category in category_matrix:
         else:
 
             ch2 = SelectKBest(chi2, k=k)
-            x_train = ch2.fit_transform(x_train, label_train)
+            new_x_train_init = ch2.fit_transform(new_x_train, label_train)
 
-            t_vectorizer = TfidfTransformer()
-            new_x_train=t_vectorizer.fit_transform(x_train)
+            # t_vectorizer = TfidfTransformer()
+            # new_x_train=t_vectorizer.fit_transform(x_train)
 
-            clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
+            clf = svm.LinearSVC(random_state=1).fit(new_x_train_init, label_train)
 
-            x_test=ch2.transform(x_test)
-            new_x_test=t_vectorizer.transform(x_test)
+            new_x_test_init=ch2.transform(new_x_test)
 
-
-            test_test_predict = clf.predict(new_x_test)
+            test_test_predict = clf.predict(new_x_test_init)
 
             p_x.append(precision_score(label_test, test_test_predict))
             r_x.append(recall_score(label_test, test_test_predict))
@@ -304,18 +304,18 @@ for category in category_matrix:
             k=math.floor(limit*50/100)
         else:
             mi = SelectKBest(mutual_info_classif, k=k)
-            x_train = mi.fit_transform(x_train, label_train)
+            new_x_train_init = mi.fit_transform(new_x_train, label_train)
 
-            t_vectorizer = TfidfTransformer()
-            new_x_train=t_vectorizer.fit_transform(x_train)
+            # t_vectorizer = TfidfTransformer()
+            # new_x_train=t_vectorizer.fit_transform(x_train)
 
-            clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
+            clf = svm.LinearSVC(random_state=1).fit(new_x_train_init, label_train)
 
-            x_test=mi.transform(x_test)
-            new_x_test=t_vectorizer.transform(x_test)
+            new_x_test_init=mi.transform(new_x_test)
+            # new_x_test_init=t_vectorizer.transform(new_x_test)
 
 
-            test_test_predict = clf.predict(new_x_test)
+            test_test_predict = clf.predict(new_x_test_init)
 
             p_m.append(precision_score(label_test, test_test_predict))
             r_m.append(recall_score(label_test, test_test_predict))
