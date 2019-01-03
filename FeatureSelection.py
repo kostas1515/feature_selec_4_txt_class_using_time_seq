@@ -365,67 +365,71 @@ class FeatureSelection():
 
 
 
-    def transform_features(self,x_train,x_test,final_pval,topk):
+    def transform_features(self,x_train,x_test,score,topk):
 
         # make a list from topk+1 to the end, in order to remove those columns from test and train
-        columns2_sub=[]
-        for x in final_pval[topk:None]:
-            columns2_sub.append(x[1])
+        # columns2_sub=[]
+        # for x in final_pval[topk:None]:
+        #     columns2_sub.append(x[1])
 
 
-        # # ########### TRANSFORM X_TRAIN ############
+        # ########### TRANSFORM X_TRAIN ############
+        mask = self.np.zeros(len(score), dtype=int) ######## this code is from sklearns selectkbest it makes a mask with ones in selected features and zeros to not selected
+        mask[self.np.argsort(score, kind="mergesort")[-topk:]] = 1
+
+
         # arr=self.np.matrix(score) # transform the list into a matrix
         # arr=self.np.where(arr > threshold, 1, 0) # select only those features above threshold, make them 1 others zero
 
-        # y = self.sp.spdiags(arr, 0, arr.size, arr.size) # this is the diagonal matrix containing only the selected indices as 1
-        # # y matrix is n_features * n_features with ones in selected indices and zeros otherwise
+        y = self.sp.spdiags(mask, 0, mask.size, mask.size) # this is the diagonal matrix containing only the selected indices as 1
+        # y matrix is n_features * n_features with ones in selected indices and zeros otherwise
         
-        # x_train=x_train * y  # [docs x n_features] * [ n_features x n_features] this gives the transformed x_train 
+        x_train=x_train * y  # [docs x n_features] * [ n_features x n_features] this gives the transformed x_train 
 
 
-        # x_test=x_test * y  # [docs x n_features] * [ n_features x n_features] this gives the transformed x_test 
+        x_test=x_test * y  # [docs x n_features] * [ n_features x n_features] this gives the transformed x_test 
 
 
-        cols = columns2_sub
-        rows = []
-        mat=x_train
-        if len(rows) > 0 and len(cols) > 0:
-            row_mask = self.np.ones(mat.shape[0], dtype=bool)
-            row_mask[rows] = False
-            col_mask = self.np.ones(mat.shape[1], dtype=bool)
-            col_mask[cols] = False
-            x_train= mat[row_mask][:,col_mask]
-        elif len(rows) > 0:
-            mask = self.np.ones(mat.shape[0], dtype=bool)
-            mask[rows] = False
-            x_train= mat[mask]
-        elif len(cols) > 0:
-            mask = self.np.ones(mat.shape[1], dtype=bool)
-            mask[cols] = False
-            x_train= mat[:,mask]
-        else:
-            x_train= mat
+        # cols = columns2_sub
+        # rows = []
+        # mat=x_train
+        # if len(rows) > 0 and len(cols) > 0:
+        #     row_mask = self.np.ones(mat.shape[0], dtype=bool)
+        #     row_mask[rows] = False
+        #     col_mask = self.np.ones(mat.shape[1], dtype=bool)
+        #     col_mask[cols] = False
+        #     x_train= mat[row_mask][:,col_mask]
+        # elif len(rows) > 0:
+        #     mask = self.np.ones(mat.shape[0], dtype=bool)
+        #     mask[rows] = False
+        #     x_train= mat[mask]
+        # elif len(cols) > 0:
+        #     mask = self.np.ones(mat.shape[1], dtype=bool)
+        #     mask[cols] = False
+        #     x_train= mat[:,mask]
+        # else:
+        #     x_train= mat
 
-        ######## transform x_test ###############
-        cols = columns2_sub
-        rows = []
-        mat=x_test
-        if len(rows) > 0 and len(cols) > 0:
-            row_mask = self.np.ones(mat.shape[0], dtype=bool)
-            row_mask[rows] = False
-            col_mask = self.np.ones(mat.shape[1], dtype=bool)
-            col_mask[cols] = False
-            x_test= mat[row_mask][:,col_mask]
-        elif len(rows) > 0:
-            mask = self.np.ones(mat.shape[0], dtype=bool)
-            mask[rows] = False
-            x_test= mat[mask]
-        elif len(cols) > 0:
-            mask = self.np.ones(mat.shape[1], dtype=bool)
-            mask[cols] = False
-            x_test= mat[:,mask]
-        else:
-            x_test= mat
+        # ######## transform x_test ###############
+        # cols = columns2_sub
+        # rows = []
+        # mat=x_test
+        # if len(rows) > 0 and len(cols) > 0:
+        #     row_mask = self.np.ones(mat.shape[0], dtype=bool)
+        #     row_mask[rows] = False
+        #     col_mask = self.np.ones(mat.shape[1], dtype=bool)
+        #     col_mask[cols] = False
+        #     x_test= mat[row_mask][:,col_mask]
+        # elif len(rows) > 0:
+        #     mask = self.np.ones(mat.shape[0], dtype=bool)
+        #     mask[rows] = False
+        #     x_test= mat[mask]
+        # elif len(cols) > 0:
+        #     mask = self.np.ones(mat.shape[1], dtype=bool)
+        #     mask[cols] = False
+        #     x_test= mat[:,mask]
+        # else:
+        #     x_test= mat
 
 
         return x_train,x_test
@@ -446,7 +450,7 @@ class FeatureSelection():
         opt_uni2=opt_uni2.flatten() # from 2d make it one dimension
         k=0
         p_val=[]
-        list_2_zero=[] #make this list to actuppon the chi2 and mutual information
+        # list_2_zero=[] #make this list to actuppon the chi2 and mutual information
         while(k<amount_of_features):#check each feature what is its distribution for non_relevant put 0
             arr=x_rel_train[:,k]
             arr=arr.toarray()
@@ -460,14 +464,14 @@ class FeatureSelection():
             #     p_val.append([p,k])
             arr=arr.flatten()
             p=self.st.ks_2samp(opt_uni2,arr)[1]
-            #p_val.append(p)
-            p_val.append([p,k])
+            p_val.append(p)
+            # p_val.append([p,k])
             k=k+1
 
 
-        final_pval=sorted(p_val, key=lambda x: x[0],reverse =True)
+        # final_pval=sorted(p_val, key=lambda x: x[0],reverse =True)
         
-        return final_pval
+        return p_val
 
 
 
@@ -490,13 +494,13 @@ class FeatureSelection():
             #     score.append([0,k])
             # else:
             #     score.append([self.np.sum(arr),k]) 
-            score.append([self.np.sum(arr),k]) 
-            #score.append(self.np.sum(arr))
+            # score.append([self.np.sum(arr),k]) 
+            score.append(self.np.sum(arr))
             k=k+1
 
-        final_score=sorted(score, key=lambda x: x[0],reverse =True)
+        # final_score=sorted(score, key=lambda x: x[0],reverse =True)
 
-        return final_score
+        return score
 
 
 
@@ -579,13 +583,13 @@ class FeatureSelection():
             #     p=self.st.ks_2samp(list(opt_uni2),day_score)[1]
             #     p_val.append([p,k])
             p=self.st.ks_2samp(list(opt_uni2),day_score)[1]
-            p_val.append([p,k])
-            #p_val.append(p)
+            # p_val.append([p,k])
+            p_val.append(p)
             day_score=[]
             k=k+1
         
-        final_pval=sorted(p_val, key=lambda x: x[0],reverse =True)     
-        return final_pval
+        # final_pval=sorted(p_val, key=lambda x: x[0],reverse =True)     
+        return p_val
 
         
 
