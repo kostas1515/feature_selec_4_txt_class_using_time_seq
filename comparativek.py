@@ -60,12 +60,17 @@ for category in category_matrix:
             axes.append(100)
         else:
             
-            new_x_train,new_x_test=bench.transform_features(x_train_init,x_test_init,score,k)
+            new_x_train,new_x_test=bench.transform_features(x_train,x_test,score,k)
+
+            #tfidf
+            t_vectorizer = TfidfTransformer()
+            x_train_init = t_vectorizer.fit_transform(new_x_train)
+            x_test_init= t_vectorizer.transform(new_x_test)
             
             #classification
 
-            clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
-            test_test_predict = clf.predict(new_x_test)
+            clf = svm.LinearSVC(random_state=1).fit(x_train_init, label_train)
+            test_test_predict = clf.predict(x_test_init)
 
 
             p_r.append(precision_score(label_test, test_test_predict))
@@ -120,12 +125,18 @@ for category in category_matrix:
 
             k=math.floor(feature_amount*50/100)
         else:
-            new_x_train,new_x_test=bench.transform_features(x_train_init,x_test_init,score,k)
+            new_x_train,new_x_test=bench.transform_features(x_train,x_test,score,k)
+
+
+            #tfidf
+            t_vectorizer = TfidfTransformer()
+            x_train_init = t_vectorizer.fit_transform(new_x_train)
+            x_test_init= t_vectorizer.transform(new_x_test)
             
             #classification
             
-            clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
-            test_test_predict = clf.predict(new_x_test)
+            clf = svm.LinearSVC(random_state=1).fit(x_train_init, label_train)
+            test_test_predict = clf.predict(x_test_init)
 
 
             p_u.append(precision_score(label_test, test_test_predict))
@@ -163,12 +174,18 @@ for category in category_matrix:
 
             k=math.floor(feature_amount*50/100)
         else:
-            new_x_train,new_x_test=bench.transform_features(x_train_init,x_test_init,score,k)
+            new_x_train,new_x_test=bench.transform_features(x_train,x_test,score,k)
+
+
+            #tfidf
+            t_vectorizer = TfidfTransformer()
+            x_train_init = t_vectorizer.fit_transform(new_x_train)
+            x_test_init= t_vectorizer.transform(new_x_test)
             
             #classification
             
-            clf = svm.LinearSVC(random_state=1).fit(new_x_train, label_train)
-            test_test_predict = clf.predict(new_x_test)
+            clf = svm.LinearSVC(random_state=1).fit(x_train_init, label_train)
+            test_test_predict = clf.predict(x_test_init)
 
 
             p_u.append(precision_score(label_test, test_test_predict))
