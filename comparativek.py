@@ -32,7 +32,7 @@ for category in category_matrix:
 
     x_rel_train=bench.get_x_rel_train(x_train,label_train)
 
-    score=bench.quick_rdf(x_rel_train)
+    rdf_score,uni_order_score,uni_stamp_score=bench.feature_selection(x_rel_train)
     
 
     feature_amount=x_rel_train.shape[1]
@@ -60,7 +60,7 @@ for category in category_matrix:
             axes.append(100)
         else:
             
-            new_x_train,new_x_test=bench.transform_features(x_train,x_test,score,k)
+            new_x_train,new_x_test=bench.transform_features(x_train,x_test,rdf_score,k)
 
             #tfidf
             t_vectorizer = TfidfTransformer()
@@ -101,7 +101,7 @@ for category in category_matrix:
     # bench.random_select(1000)
     # new_x_train=bench.x_train #for chi squere only
 
-    score=bench.quick_uniform(x_rel_train)
+    
 
 
     feature_amount=x_rel_train.shape[1]
@@ -125,7 +125,7 @@ for category in category_matrix:
 
             k=math.floor(feature_amount*50/100)
         else:
-            new_x_train,new_x_test=bench.transform_features(x_train,x_test,score,k)
+            new_x_train,new_x_test=bench.transform_features(x_train,x_test,uni_order_score,k)
 
 
             #tfidf
@@ -150,7 +150,7 @@ for category in category_matrix:
     f1["uniformO_f1"]=fm
 
 
-    score=bench.quick_uniform2(x_rel_train)
+    
 
     feature_amount=x_rel_train.shape[1]
     k=feature_amount
@@ -174,7 +174,7 @@ for category in category_matrix:
 
             k=math.floor(feature_amount*50/100)
         else:
-            new_x_train,new_x_test=bench.transform_features(x_train,x_test,score,k)
+            new_x_train,new_x_test=bench.transform_features(x_train,x_test,uni_stamp_score,k)
 
 
             #tfidf
