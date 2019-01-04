@@ -591,6 +591,62 @@ class FeatureSelection():
         # final_pval=sorted(p_val, key=lambda x: x[0],reverse =True)     
         return p_val
 
+
+    def feature_selection(self,x_rel_train):
+
+        x_rel_train=x_rel_train
+        amount_of_documents=x_rel_train.shape[0] # this is the amount of only relevant documents
+        amount_of_features=x_rel_train.shape[1]  # these are all the features
+
+        file_per_day_array=self.file_per_day_array
+        opt_uni_order=self.np.ones((amount_of_documents,1),dtype=int).flatten()
+        opt_uni_stamp=self.np.ones((len(file_per_day_array),1),dtype=int).flatten()
+
+        k=0
+        feat_sum=0
+        score=[]
+        day_score=[]
+        doc_per_day=0
+        position=0
+
+        rdf_score=[]
+        uni_order_score=[]
+        uni_stamp_score=[]
+    
+        while(k<amount_of_features):#check each feature what is its distribution for non_relevant put 0
+            arr=x_rel_train[:,k]
+            arr=arr.toarray()
+            arr=self.np.where(arr > 0, 1, 0) # because we need just one, not the total amount of particular feature in that documnt so if there is above zero make it 1 (like binary countvectorizer)
+            feat_sum=self.np.sum(arr)
+
+            ############## RDF ##############################
+            rdf_score.append(feat_sum)
+
+            ################ UNIFORM TIME STAMP ############################
+            while(doc_per_day<len(file_per_day_array)):
+                temp_sum=self.np.sum(arr[position:position+file_per_day_array[doc_per_day]])
+                day_score.append(temp_sum)
+                position=position+file_per_day_array[doc_per_day]
+                doc_per_day=doc_per_day+1
+            doc_per_day=0
+            position=0
+            p_stamp=self.st.ks_2samp(list(opt_uni_stamp),day_score)[1]
+            uni_stamp_score.append(p)
+            day_score=[]
+
+            ########### UNIFORM TIME ORDER ######################
+            arr=arr.flatten()
+            p_order=self.st.ks_2samp(opt_uni_order,arr)[1]
+            uni_order_score.append(p_order)
+
+
+            k=k+1
+
+        return rdf_score, uni_order_score, uni_stamp_score 
+
+
+
+
         
 
 
