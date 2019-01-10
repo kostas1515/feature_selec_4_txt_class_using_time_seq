@@ -599,8 +599,10 @@ class FeatureSelection():
         amount_of_features=x_rel_train.shape[1]  # these are all the features
 
         file_per_day_array=self.file_per_day_array
-        opt_uni_order=self.np.ones((amount_of_documents,1),dtype=int).flatten()
-        opt_uni_stamp=self.np.ones((len(file_per_day_array),1),dtype=int).flatten()
+        
+        opt_uni_order=self.np.random.randint(0,2,amount_of_documents)
+        opt_uni_stamp=self.np.random.randint(0,2,(len(file_per_day_array))
+        
 
         k=0
         feat_sum=0
@@ -631,7 +633,7 @@ class FeatureSelection():
             doc_per_day=0
             position=0
             p_stamp=self.st.ks_2samp(list(opt_uni_stamp),day_score)[1]
-            uni_stamp_score.append(p)
+            uni_stamp_score.append(p_stamp)
             day_score=[]
 
             ########### UNIFORM TIME ORDER ######################
