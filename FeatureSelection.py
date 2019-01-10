@@ -600,7 +600,7 @@ class FeatureSelection():
 
         file_per_day_array=self.file_per_day_array
         opt_uni_order=self.np.random.randint(0,2,amount_of_documents)
-        opt_uni_order=self.np.random.randint(0,2,len(file_per_day_array))
+        opt_uni_stamp=self.np.random.randint(0,2,len(file_per_day_array))
 
 
         k=0
@@ -631,7 +631,7 @@ class FeatureSelection():
                 doc_per_day=doc_per_day+1
             doc_per_day=0
             position=0
-            p_stamp=self.st.ks_2samp(list(opt_uni_stamp),day_score)[1]
+            p_stamp=self.st.ks_2samp(opt_uni_stamp,day_score)[1]
             uni_stamp_score.append(p_stamp)
             day_score=[]
 
