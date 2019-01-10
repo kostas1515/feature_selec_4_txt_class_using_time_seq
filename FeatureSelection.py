@@ -599,10 +599,9 @@ class FeatureSelection():
         amount_of_features=x_rel_train.shape[1]  # these are all the features
 
         file_per_day_array=self.file_per_day_array
-        
         opt_uni_order=self.np.random.randint(0,2,amount_of_documents)
-        opt_uni_stamp=self.np.random.randint(0,2,(len(file_per_day_array))
-        
+        opt_uni_order=self.np.random.randint(0,2,len(file_per_day_array))
+
 
         k=0
         feat_sum=0
