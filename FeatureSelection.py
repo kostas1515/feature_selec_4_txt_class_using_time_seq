@@ -374,20 +374,22 @@ class FeatureSelection():
 
 
         # ########### TRANSFORM X_TRAIN ############
-        mask = self.np.zeros(len(score), dtype=int) ######## this code is from sklearns selectkbest it makes a mask with ones in selected features and zeros to not selected
-        mask[self.np.argsort(score, kind="mergesort")[-topk:]] = 1
+        mask = self.np.zeros(len(score), dtype=bool) ######## this code is from sklearns selectkbest it makes a mask with ones in selected features and zeros to not selected
+        mask[self.np.argsort(score, kind="mergesort")[-topk:]] = True
 
 
         # arr=self.np.matrix(score) # transform the list into a matrix
         # arr=self.np.where(arr > threshold, 1, 0) # select only those features above threshold, make them 1 others zero
 
-        y = self.sp.spdiags(mask, 0, mask.size, mask.size) # this is the diagonal matrix containing only the selected indices as 1
+        # y = self.sp.spdiags(mask, 0, mask.size, mask.size) # this is the diagonal matrix containing only the selected indices as 1
         # y matrix is n_features * n_features with ones in selected indices and zeros otherwise
         
-        x_train=x_train * y  # [docs x n_features] * [ n_features x n_features] this gives the transformed x_train 
+        # x_train=x_train * y  # [docs x n_features] * [ n_features x n_features] this gives the transformed x_train 
+        x_train= x_train[:,mask]
+        x_test = x_test[:,mask]
 
 
-        x_test=x_test * y  # [docs x n_features] * [ n_features x n_features] this gives the transformed x_test 
+        # x_test=x_test * y  # [docs x n_features] * [ n_features x n_features] this gives the transformed x_test 
 
 
         # cols = columns2_sub
@@ -604,7 +606,7 @@ class FeatureSelection():
         opt_uni_order=self.np.arange(amount_of_documents)
 
         opt_uni_stamp=self.np.arange(len(file_per_day_array))
-        
+
 
 
         k=0
