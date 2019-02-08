@@ -20,6 +20,7 @@ class FeatureSelection():
         self.y_train=[]
         self.x_test=[]
         self.y_test=[]
+        self.mask=[] # this is an 1-d array containing ones and zeros, for on is the rel_feature and zero the non rel, it depends of the rel_train vocabulary
         self.is_wknd_train=[]#this contains if the train document was written on a weekend 
         self.is_wknd_test=[] #this contains if the test document was written on a weekend 
         self.file_per_day_array=[]# an array that contains the number of relevant docs that day
@@ -65,225 +66,6 @@ class FeatureSelection():
         return 0
         #this is a private method that heleps the target_category method and transforms the target_cat into 0 ,1
 
-
-    def uniform(self,step_interval,decision_thres,topk):
-        self.topk=topk
-        self.step_interval=step_interval #step interval can be either 'single' or day
-        self.decision_thres=decision_thres #it can be from 1 to 0.001 --? 1 means even one occurence count as uniform
-        
-
-
-        rel_pool= self.x_rel_train_pool
-        rel_pool=sorted(rel_pool)
-
-        if (self.step_interval=='single'):
-            timeline=sum(self.y_train) # the sum of relative documents
-            step=1/timeline
-
-            #first build the optimal cumulative uniform discrete function
-            cumulative=[]
-            #axes=[]
-            k=1 #counter
-            while(k<=timeline):
-                cumulative.append(step*k)
-                #axes.append(k-1)
-                k=k+1
-
-            #calculate the cumulative distribution for every feature and get the p value
-            p_val=[]
-            k=0
-            relative_k=1 #counter of the step interval 
-            temp_sum=0
-            temp_cumulative=[]
-            for feat in rel_pool:
-                while(k<timeline):
-                    temp_list=list(set(self.x_rel_train[k].split()))
-                    temp_list=sorted(temp_list)
-                    if feat not in temp_list:
-                        temp_cumulative.append(temp_sum)
-                    else:
-                        temp_cumulative.append(relative_k)
-                        temp_sum=relative_k
-                        relative_k=relative_k+1
-                    k=k+1
-                tc=self.np.array(temp_cumulative)/(relative_k-1) #subtract 1 because the last iteration of relative_k would be faulty
-                cc=self.np.array(cumulative)
-                p=self.st.ks_2samp(cc, tc)[1]
-                p_val.append(p)
-                temp_cumulative=[]
-                temp_sum=0
-                k=0
-                relative_k=1
-        else: #this means that the interval will be a day
-            timeline=len(self.file_per_day_array)
-            step=1/timeline
-            #first build the optimal cumulative uniform discrete function
-            cumulative=[]
-            axes=[]
-            k=1 #counter
-            while(k<=timeline):
-                cumulative.append(step*k)
-                # axes.append(k-1)
-                k=k+1
-
-            #calculate the cumulative distribution for every feature and get the p value
-            p_val=[]
-            k=0 #k goes from zero to timeline
-            rel_file=0 #rel_file goes from zero to value of file_per_day_array[k]
-            file=0 #file goes from zero to len(x_rel_train)
-            temp_sum=0
-            temp_cumulative=[]
-            tc_count=0 #this is a counter that helps to build the cumulative uniform
-            for feat in rel_pool:
-                while(k<timeline):
-                    while(rel_file<self.file_per_day_array[k]):
-                        if feat in self.x_rel_train[rel_file+file].split():
-                            temp_sum=temp_sum+1
-                        rel_file=rel_file +1
-                    if (temp_sum>(self.file_per_day_array[k]*self.decision_thres)):# if the total sum of relevant files containing the feat is higher than the total rel files then consider that feat uniform for that day
-                        temp_cumulative.append(1)
-                    else:
-                        temp_cumulative.append(0)
-                    temp_sum=0
-                    file=rel_file+file
-                    rel_file=0#set this to zero to count the next num of files_per day
-                    k=k+1
-                # print(sum(temp_cumulative))
-                if(sum(temp_cumulative)!=0):
-                    tc=self.np.array(temp_cumulative)/(sum(temp_cumulative))
-                    while(tc_count<len(tc)-1):
-                        tc[tc_count+1]=tc[tc_count]+tc[tc_count+1]
-                        tc_count=tc_count+1
-                    cc=self.np.array(cumulative)
-                    p=self.st.ks_2samp(cc, tc)[1]
-                    p_val.append(p)
-                else:
-                    p_val.append(0)
-                temp_cumulative=[]
-                temp_sum=0
-                k=0
-                file=0
-                tc_count=0
-
-        d = {'p_val': p_val,'feat': rel_pool}
-        p_val_feat = self.pd.DataFrame(data=d) #this is a dataframe containing the values and the features
-        sort_p_val_feat=p_val_feat.sort_values('p_val',ascending=False)
-        self.uniform_feat_pool=sort_p_val_feat['feat'][0:self.topk].tolist() # uniform_rel_pool was dataframe and it had to be a list
-
-        temp_list=[]
-        self.new_x_train=[] #revised train set with only rel terms 
-        list2sub=[] #temp list that holds elements to subtract
-
-        for txt2 in self.x_train:
-            temp_list=txt2.split()
-            for feature in temp_list:
-                if feature not in self.uniform_feat_pool:
-                    list2sub.append(feature)
-            for x in list2sub:
-                temp_list.remove(x)
-            list2sub=[]
-            str1=' '.join(temp_list)
-            temp_list=[]
-            if (str1==''): #for empty documents put nofeaturedetected
-                self.new_x_train.append("nofeaturedetected")
-            else:
-                self.new_x_train.append(str1)
-
-
-        temp_list=[]
-        self.new_x_test=[] #revised test set with only rel terms 
-        list2sub=[] #temp list that holds elements to subtract
-
-        for txt2 in self.x_test:
-            temp_list=txt2.split()
-            for feature in temp_list:
-                if feature not in self.uniform_feat_pool:
-                    list2sub.append(feature)
-            for x in list2sub:
-                temp_list.remove(x)
-            list2sub=[]
-            str1=' '.join(temp_list)
-            temp_list=[]
-            if (str1==''): #for empty documents put nofeaturedetected
-                self.new_x_test.append("nofeaturedetected")
-            else:
-                self.new_x_test.append(str1)
-
-        return self.new_x_train,self.new_x_test
-
-
-            
-
-    def rdf(self,topk): # it uses Coundvectorizer 
-        self.topk=topk
-
-        rel_pool=self.x_rel_train_pool #this is the relative features pool in alphabetic order
-        rel_pool=sorted(rel_pool)
-        k=0
-        term_count=0
-        term_score=[]
-        for term in rel_pool:
-            while(k<len(self.x_rel_train)):
-                temp_list=self.x_rel_train[k].split() #make a temp_list remove duplicates and sort to increase speed
-                temp_list=list(set(temp_list))
-                temp_list=sorted(temp_list)
-                if(term in temp_list):
-                    term_count=term_count+1
-                k=k+1
-            term_score.append(term_count)
-            term_count=0
-            k=0
-
-        d = {'feat': rel_pool,'score': term_score}
-        rdf_feat_score = self.pd.DataFrame(data=d)
-
-        sort_rdf_feat_score=rdf_feat_score.sort_values('score',ascending=False)
-        self.rdf_rel_pool=sort_rdf_feat_score['feat'][0:self.topk].tolist() # attention transform the dataframe to a list !!!!
-
-
-       # print ("the pool of relevant terms has  " + str(len(rel_pool)) +" features.")
-       # subtrack from x_train all other features that are not included with regards to rel_pool
-        temp_list=[]
-        self.new_x_train=[] #revised train set with only rel terms 
-        list2sub=[] #temp list that holds elements to subtract
-
-        for txt2 in self.x_train:
-            temp_list=txt2.split()
-            for feature in temp_list:
-                if feature not in self.rdf_rel_pool:
-                    list2sub.append(feature)
-            for x in list2sub:
-                temp_list.remove(x)
-            list2sub=[]
-            str1=' '.join(temp_list)
-            temp_list=[]
-            if (str1==''): #for empty documents put nofeaturedetected
-                self.new_x_train.append("nofeaturedetected")
-            else:
-                self.new_x_train.append(str1)
-       
-
-        temp_list=[]
-        self.new_x_test=[] #revised test set with only rel terms 
-        list2sub=[] #temp list that holds elements to subtract
-
-        for txt2 in self.x_test:
-            temp_list=txt2.split()
-            for feature in temp_list:
-                if feature not in self.rdf_rel_pool:
-                    list2sub.append(feature)
-            for x in list2sub:
-                temp_list.remove(x)
-            list2sub=[]
-            str1=' '.join(temp_list)
-            temp_list=[]
-            if (str1==''): #for empty documents put nofeaturedetected
-                self.new_x_test.append("nofeaturedetected")
-            else:
-                self.new_x_test.append(str1)
-
-
-        return self.new_x_train,self.new_x_test
 
 
 
@@ -437,6 +219,15 @@ class FeatureSelection():
         return x_train,x_test
 
 
+    def remove_non_rel_features(self,x_train,x_test):
+        mask=self.mask
+        x_train= x_train[:,mask]
+        x_test = x_test[:,mask]
+
+        return x_train,x_test
+
+
+
 
 
     def quick_uniform(self,x_rel_train):
@@ -509,13 +300,22 @@ class FeatureSelection():
     def get_x_rel_train(self,x_train,y_train):
         #the purpose of this function is to remove the non relevant documents and  get only the relevant corpus in a count_vectorizing fashion
 
-        y = self.sp.spdiags(y_train, 0, len(y_train), len(y_train)) #diagonal matrix containing the y_train
+        # y = self.sp.spdiags(y_train, 0, len(y_train), len(y_train)) #diagonal matrix containing the y_train
 
-        result= y * x_train # the result is the initial x_train matrix containing zero-rows according to the y_train
+        # result= y * x_train # the result is the initial x_train matrix containing zero-rows according to the y_train
 
-        result = result[result.getnnz(1)>0]  # this code removes all zero-element- rows
+        # result = result[result.getnnz(1)>0]  # this code removes all zero-element- rows
 
-        #the result is a matrix (n_features * n_rel_docs)
+        mask1 = self.np.array(y_train, dtype=bool) # this is an only rel_doc mask 
+
+        x_rel_train= x_train[mask1] # this is a matrix containing only rel_docs in countvectorizer fashion
+
+        mask = x_rel_train.getnnz(0)>0 # this is the mask, 1-d array containing only rel_features, it has the length of all features and ones in rel - zeros in nonrel
+
+        x_rel_train= x_rel_train[:,mask] # this is the matrix with [rel_docs x rel_features]
+
+
+        self.mask = mask
 
         # ind_list2_sub=[] 
         # i=0
@@ -545,7 +345,7 @@ class FeatureSelection():
         # else:
         #     x_rel_train= mat
 
-        return result
+        return x_rel_train
 
 
 
@@ -628,27 +428,23 @@ class FeatureSelection():
 
             ############## RDF ##############################
             rdf_score.append(feat_sum)
-            if (feat_sum==0):
-                uni_stamp_score.append(0)
-                uni_order_score.append(0)
-            else:
             ################ UNIFORM TIME STAMP ############################
-                while(doc_per_day<len(file_per_day_array)):
-                    temp_sum=self.np.sum(arr[position:position+file_per_day_array[doc_per_day]])
-                    for x in range(temp_sum):
-                        day_score.append(doc_per_day)
-                    position=position+file_per_day_array[doc_per_day]
-                    doc_per_day=doc_per_day+1
-                doc_per_day=0
-                position=0
-                p_stamp=self.st.ks_2samp(opt_uni_stamp,day_score)[1]
-                uni_stamp_score.append(p_stamp)
-                day_score=[]
+            while(doc_per_day<len(file_per_day_array)):
+                temp_sum=self.np.sum(arr[position:position+file_per_day_array[doc_per_day]])
+                for x in range(temp_sum):
+                    day_score.append(doc_per_day)
+                position=position+file_per_day_array[doc_per_day]
+                doc_per_day=doc_per_day+1
+            doc_per_day=0
+            position=0
+            p_stamp=self.st.ks_2samp(opt_uni_stamp,day_score)[1]
+            uni_stamp_score.append(p_stamp)
+            day_score=[]
 
             ########### UNIFORM TIME ORDER ######################
-                arr=self.np.nonzero(arr)[0]
-                p_order=self.st.ks_2samp(opt_uni_order,arr)[1]
-                uni_order_score.append(p_order)
+            arr=self.np.nonzero(arr)[0]
+            p_order=self.st.ks_2samp(opt_uni_order,arr)[1]
+            uni_order_score.append(p_order)
 
 
             k=k+1
