@@ -449,7 +449,75 @@ class FeatureSelection():
 
             k=k+1
 
-        return rdf_score, uni_order_score, uni_stamp_score 
+        return rdf_score, uni_order_score, uni_stamp_score
+
+
+
+    def emd_and_kl(self,x_rel_train):
+        x_rel_train=x_rel_train
+        amount_of_documents=x_rel_train.shape[0] # this is the amount of only relevant documents
+        amount_of_features=x_rel_train.shape[1]  # these are all the features
+
+        file_per_day_array=self.file_per_day_array
+
+        opt_uni_order_w=self.np.arange(amount_of_documents)
+
+        opt_uni_stamp_w=self.np.arange(len(file_per_day_array))
+
+        opt_uni_order_kl=self.np.ones(amount_of_documents)
+
+        opt_uni_stamp_kl=self.np.ones(len(file_per_day_array))
+
+
+
+        k=0
+
+        day_score_kl=[]
+        day_score_w=[]
+        doc_per_day=0
+        position=0
+
+        uni_order_score_w=[]
+        uni_stamp_score_w=[]
+        uni_order_score_kl=[]
+        uni_stamp_score_kl=[]
+    
+        while(k<amount_of_features):#check each feature what is its distribution for non_relevant put 0
+            arr=x_rel_train[:,k]
+            arr=arr.toarray()
+            arr=self.np.where(arr > 0, 1, 0) # because we need just one, not the total amount of particular feature in that documnt so if there is above zero make it 1 (like binary countvectorizer)
+            
+            arrkl=arr.flatten()
+            ################ UNIFORM TIME STAMP ############################
+            while(doc_per_day<len(file_per_day_array)):
+                temp_sum=self.np.sum(arr[position:position+file_per_day_array[doc_per_day]])
+                day_score_kl.append(temp_sum)
+                for x in range(temp_sum):
+                    day_score_w.append(doc_per_day)
+                position=position+file_per_day_array[doc_per_day]
+                doc_per_day=doc_per_day+1
+            doc_per_day=0
+            position=0
+            p_stamp=self.st.wasserstein_distance(opt_uni_stamp_w,day_score_w)
+            uni_stamp_score_w.append(-p_stamp)
+
+            p_stamp=self.st.entropy(day_score_kl,opt_uni_stamp_kl)
+            uni_stamp_score_kl.append(1-p_stamp)
+            day_score_kl=[]
+            day_score_w=[]
+
+            ########### UNIFORM TIME ORDER ######################
+            arr=self.np.nonzero(arr)[0]
+            p_order=self.st.wasserstein_distance(opt_uni_order_w,arr)
+            uni_order_score_w.append(-p_order)
+            p_order=self.st.entropy(arrkl,opt_uni_order_w)
+            uni_order_score_kl.append(1-p_order)
+
+
+            k=k+1
+
+        return  uni_order_score_w, uni_stamp_score_w,uni_order_score_kl,uni_stamp_score_kl
+
 
 
 
