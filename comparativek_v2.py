@@ -11,7 +11,10 @@ import math
 
 # row['percent_train']>0.02
 #category_matrix=["C172","C18","C181","C313","GCRIM","GDIS","GFAS","GJOB","GSCI","GVOTE","GWEA","C183","C22","C32","C411","E13","E212","C173"]
-category_matrix=["C172"]
+category_matrix=["C4","C41","C411","C42","C","E1","E11","E12","E121","E13",
+"E131","E132","E14","E141","E142","E143","E2","E21","E211","E212","E3","E31","E311","E312","E313","E4","E41","E411","E5","E51","E511",
+"E512","E513","E6","E61","E7","E71","E","G1","G15","G151","G152","G153","G154","G155","G156","G157","G158","G159","G","GCRIM","GDEF","GDIP","GDIS","GENT","GENV","GFAS","GHEA","GJOB","GOBIT","GODD","GPOL","GPRO","GREL","GSCI","GSPO","GTOUR",
+"GVIO","GVOTE","GWEA","GWELF","M1","M11","M12","M13","M131","M132","M14","M141","M142","M143","M"]
 for category in category_matrix:
     df=pd.DataFrame()
     f1=pd.DataFrame()
@@ -57,7 +60,7 @@ for category in category_matrix:
 
     x_rel_train=bench.get_x_rel_train(x_train,label_train)
 
-    rdf_score,uni_order_score,uni_stamp_score=bench.feature_selection(x_rel_train)
+    rdf_score=bench.quick_rdf(x_rel_train)
 
 
     # x_train and x_test contain only relevant features
@@ -115,65 +118,65 @@ for category in category_matrix:
 
 
 
-    ###################################### Uniform time order ###############################
-    p_p=[]
-    r_r=[]
-    fm=[]
+    # ###################################### Uniform time order ###############################
+    # p_p=[]
+    # r_r=[]
+    # fm=[]
 
-    for thresh in threshold:
-        k=math.floor(feature_amount*thresh/100)
-        new_x_train,new_x_test=bench.transform_features(x_train,x_test,uni_order_score,k)
+    # for thresh in threshold:
+    #     k=math.floor(feature_amount*thresh/100)
+    #     new_x_train,new_x_test=bench.transform_features(x_train,x_test,uni_order_score,k)
 
-            #tfidf
-        t_vectorizer = TfidfTransformer()
-        x_train_init = t_vectorizer.fit_transform(new_x_train)
-        x_test_init= t_vectorizer.transform(new_x_test)
+    #         #tfidf
+    #     t_vectorizer = TfidfTransformer()
+    #     x_train_init = t_vectorizer.fit_transform(new_x_train)
+    #     x_test_init= t_vectorizer.transform(new_x_test)
         
-        #classification
+    #     #classification
 
-        clf = svm.LinearSVC(random_state=1).fit(x_train_init, label_train)
-        test_test_predict = clf.predict(x_test_init)
-
-
-        p_p.append(precision_score(label_test, test_test_predict))
-        r_r.append(recall_score(label_test, test_test_predict))
-        fm.append(f1_score(label_test, test_test_predict))
-        
-
-    df["uniformO_p"]=precision + p_p
-    df["uniformO_r"]=recall + r_r
-    f1["uniformO_f1"]=f_score + fm
+    #     clf = svm.LinearSVC(random_state=1).fit(x_train_init, label_train)
+    #     test_test_predict = clf.predict(x_test_init)
 
 
-    ############################### UNIFORM TIME STAMP #################################
-
-    p_p=[]
-    r_r=[]
-    fm=[]
-
-    for thresh in threshold:
-        k=math.floor(feature_amount*thresh/100)
-        new_x_train,new_x_test=bench.transform_features(x_train,x_test,uni_stamp_score,k)
-
-            #tfidf
-        t_vectorizer = TfidfTransformer()
-        x_train_init = t_vectorizer.fit_transform(new_x_train)
-        x_test_init= t_vectorizer.transform(new_x_test)
-        
-        #classification
-
-        clf = svm.LinearSVC(random_state=1).fit(x_train_init, label_train)
-        test_test_predict = clf.predict(x_test_init)
-
-
-        p_p.append(precision_score(label_test, test_test_predict))
-        r_r.append(recall_score(label_test, test_test_predict))
-        fm.append(f1_score(label_test, test_test_predict))
+    #     p_p.append(precision_score(label_test, test_test_predict))
+    #     r_r.append(recall_score(label_test, test_test_predict))
+    #     fm.append(f1_score(label_test, test_test_predict))
         
 
-    df["uniformS_p"]=precision + p_p
-    df["uniformS_r"]=recall + r_r
-    f1["uniformS_f1"]=f_score + fm
+    # df["uniformO_p"]=precision + p_p
+    # df["uniformO_r"]=recall + r_r
+    # f1["uniformO_f1"]=f_score + fm
+
+
+    # ############################### UNIFORM TIME STAMP #################################
+
+    # p_p=[]
+    # r_r=[]
+    # fm=[]
+
+    # for thresh in threshold:
+    #     k=math.floor(feature_amount*thresh/100)
+    #     new_x_train,new_x_test=bench.transform_features(x_train,x_test,uni_stamp_score,k)
+
+    #         #tfidf
+    #     t_vectorizer = TfidfTransformer()
+    #     x_train_init = t_vectorizer.fit_transform(new_x_train)
+    #     x_test_init= t_vectorizer.transform(new_x_test)
+        
+    #     #classification
+
+    #     clf = svm.LinearSVC(random_state=1).fit(x_train_init, label_train)
+    #     test_test_predict = clf.predict(x_test_init)
+
+
+    #     p_p.append(precision_score(label_test, test_test_predict))
+    #     r_r.append(recall_score(label_test, test_test_predict))
+    #     fm.append(f1_score(label_test, test_test_predict))
+        
+
+    # df["uniformS_p"]=precision + p_p
+    # df["uniformS_r"]=recall + r_r
+    # f1["uniformS_f1"]=f_score + fm
 
 
 
