@@ -239,8 +239,8 @@ class FeatureSelection():
         amount_of_features=x_rel_train.shape[1]  # these are all the features
 
         #build the optimal uniform function
-        opt_uni2=self.np.ones((amount_of_documents,1),dtype=int) 
-        opt_uni2=opt_uni2.flatten() # from 2d make it one dimension
+        opt_uni_order=self.np.arange(amount_of_documents)
+
         k=0
         p_val=[]
         # list_2_zero=[] #make this list to actuppon the chi2 and mutual information
@@ -255,8 +255,8 @@ class FeatureSelection():
             #     arr=arr.flatten()
             #     p=self.st.ks_2samp(opt_uni2,arr)[1]
             #     p_val.append([p,k])
-            arr=arr.flatten()
-            p=self.st.ks_2samp(opt_uni2,arr)[1]
+            arr=self.np.nonzero(arr)[0]
+            p=self.st.ks_2samp(opt_uni_order,arr)[1]
             p_val.append(p)
             # p_val.append([p,k])
             k=k+1
@@ -359,11 +359,10 @@ class FeatureSelection():
         amount_of_documents=x_rel_train.shape[0]
 
 
-        opt_uni2=self.np.ones((len(file_per_day_array),1),dtype=int).flatten()
+        opt_uni_stamp=self.np.arange(len(file_per_day_array))
 
 
         k=0
-        score=[]
         day_score=[]
         doc_per_day=0
         position=0
@@ -385,7 +384,7 @@ class FeatureSelection():
             # else:  
             #     p=self.st.ks_2samp(list(opt_uni2),day_score)[1]
             #     p_val.append([p,k])
-            p=self.st.ks_2samp(list(opt_uni2),day_score)[1]
+            p=self.st.ks_2samp(opt_uni_stamp,day_score)[1]
             # p_val.append([p,k])
             p_val.append(p)
             day_score=[]
@@ -411,7 +410,6 @@ class FeatureSelection():
 
         k=0
         feat_sum=0
-        score=[]
         day_score=[]
         doc_per_day=0
         position=0
